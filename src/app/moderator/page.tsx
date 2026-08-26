@@ -6,6 +6,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Badge } from '@/components/ui/Badge';
 import { ModeratorRealtime } from '@/components/moderator/ModeratorRealtime';
 import { DayAccessControl } from '@/components/moderator/DayAccessControl';
+import { DeleteParticipantButton } from '@/components/moderator/DeleteParticipantButton';
 import { Squiggle } from '@/components/brand/Moa';
 import { pct, timeAgo } from '@/lib/utils';
 import type { Campus, DayAccessRow, ParticipantProgressRow } from '@/types/database';
@@ -15,7 +16,8 @@ export const dynamic = 'force-dynamic';
 type Search = { campus?: string; day?: string; q?: string };
 
 export default async function ModeratorDashboard({ searchParams }: { searchParams: Search }) {
-  await requireStaff();
+  const staff = await requireStaff();
+  const isAdmin = staff.role === 'admin';
   const supabase = createClient();
 
   const dayFilter = Number(searchParams.day ?? 0) || 0;
@@ -128,6 +130,7 @@ export default async function ModeratorDashboard({ searchParams }: { searchParam
                 <th className="px-4 py-3">Actividad</th>
                 <th className="px-4 py-3">Reporte IA</th>
                 <th className="px-4 py-3" />
+                {isAdmin && <th className="px-4 py-3" />}
               </tr>
             </thead>
             <tbody>
@@ -169,11 +172,16 @@ export default async function ModeratorDashboard({ searchParams }: { searchParam
                       Abrir
                     </Link>
                   </td>
+                  {isAdmin && (
+                    <td className="px-4 py-3">
+                      <DeleteParticipantButton participantId={r.id} participantName={r.full_name} />
+                    </td>
+                  )}
                 </tr>
               ))}
               {!rows.length && (
                 <tr>
-                  <td colSpan={11} className="px-4 py-14 text-center font-semibold text-ink/45">
+                  <td colSpan={isAdmin ? 12 : 11} className="px-4 py-14 text-center font-semibold text-ink/45">
                     No hay participantes con esos filtros.
                   </td>
                 </tr>
@@ -182,6 +190,13 @@ export default async function ModeratorDashboard({ searchParams }: { searchParam
           </table>
         </div>
       </section>
+
+      {isAdmin && (
+        <p className="text-xs font-semibold text-ink/40">
+          Como administrador puedes eliminar cuentas de participantes. Borra su workbook completo y
+          libera el correo para volver a registrarse.
+        </p>
+      )}
 
       <p className="text-xs font-semibold text-ink/40">
         Checkpoints por día: {Object.entries(CHECKPOINTS_PER_DAY).map(([d, n]) => `D${d}: ${n}`).join(' · ')}
