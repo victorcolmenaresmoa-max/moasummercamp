@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { AuthShell, FormError } from '@/components/auth/AuthShell';
 
 const CAMP_CODE = process.env.NEXT_PUBLIC_CAMP_CODE ?? 'MOA2026';
 
@@ -27,9 +28,9 @@ export default function SignupPage() {
     setLoading(true);
     const supabase = createClient();
     const { error } = await supabase.auth.signUp({
-      email: form.email,
+      email: form.email.trim(),
       password: form.password,
-      options: { data: { full_name: form.fullName, campus: form.campus } },
+      options: { data: { full_name: form.fullName.trim(), campus: form.campus } },
     });
 
     if (error) {
@@ -42,44 +43,100 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-10">
-      <div className="card p-8">
-        <p className="text-xs font-bold uppercase tracking-[0.25em] text-accent-600">MOA Reading Lab</p>
-        <h1 className="mt-2 font-serif text-2xl font-bold text-brand-900">Mi registro</h1>
-        <p className="mt-1 text-sm text-ink/60">Nombre y sede quedan en la portada de tu workbook digital.</p>
+    <AuthShell
+      title="Mi registro"
+      subtitle="Tu nombre y tu sede quedan en la portada de tu workbook digital."
+      footer={
+        <>
+          ¿Ya tienes cuenta?{' '}
+          <Link href="/login" className="font-bold text-teal-600 underline-offset-4 hover:underline">
+            Entrar
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={onSubmit} className="space-y-5">
+        <div>
+          <label className="label" htmlFor="name">Mi nombre</label>
+          <input
+            id="name"
+            className="input mt-1.5"
+            autoComplete="name"
+            required
+            value={form.fullName}
+            onChange={(e) => set('fullName', e.target.value)}
+          />
+        </div>
 
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <div>
-            <label className="label">Mi nombre</label>
-            <input className="input mt-1" required value={form.fullName} onChange={(e) => set('fullName', e.target.value)} />
+        <div>
+          <label className="label">Mi sede</label>
+          <div className="mt-1.5 grid grid-cols-2 gap-2">
+            {[
+              { v: 'merida', l: 'Mérida' },
+              { v: 'el_vigia', l: 'El Vigía' },
+            ].map((c) => (
+              <button
+                key={c.v}
+                type="button"
+                onClick={() => set('campus', c.v)}
+                aria-pressed={form.campus === c.v}
+                className={`rounded-2xl border-2 px-4 py-2.5 text-sm font-bold transition ${
+                  form.campus === c.v
+                    ? 'border-teal-500 bg-teal-500 text-white shadow-moa'
+                    : 'border-teal-100 bg-white text-teal-700 hover:border-teal-200'
+                }`}
+              >
+                {c.l}
+              </button>
+            ))}
           </div>
-          <div>
-            <label className="label">Mi sede</label>
-            <select className="input mt-1" value={form.campus} onChange={(e) => set('campus', e.target.value)}>
-              <option value="merida">Mérida</option>
-              <option value="el_vigia">El Vigía</option>
-            </select>
-          </div>
-          <div>
-            <label className="label">Correo</label>
-            <input className="input mt-1" type="email" required value={form.email} onChange={(e) => set('email', e.target.value)} />
-          </div>
-          <div>
-            <label className="label">Contraseña (mínimo 6 caracteres)</label>
-            <input className="input mt-1" type="password" minLength={6} required value={form.password} onChange={(e) => set('password', e.target.value)} />
-          </div>
-          <div>
-            <label className="label">Código del camp</label>
-            <input className="input mt-1" required placeholder="MOA2026" value={form.code} onChange={(e) => set('code', e.target.value)} />
-          </div>
-          {error && <p className="rounded-xl bg-clay-100 px-3 py-2 text-sm text-clay-500">{error}</p>}
-          <button className="btn-primary w-full" disabled={loading}>{loading ? 'Creando…' : 'Empezar el camp'}</button>
-        </form>
+        </div>
 
-        <p className="mt-6 text-center text-sm text-ink/60">
-          ¿Ya tienes cuenta? <Link href="/login" className="font-semibold text-brand-600">Entrar</Link>
-        </p>
-      </div>
-    </main>
+        <div>
+          <label className="label" htmlFor="email">Correo</label>
+          <input
+            id="email"
+            className="input mt-1.5"
+            type="email"
+            autoComplete="email"
+            required
+            value={form.email}
+            onChange={(e) => set('email', e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="label" htmlFor="pw">Contraseña <span className="font-normal text-ink/45">(mínimo 6 caracteres)</span></label>
+          <input
+            id="pw"
+            className="input mt-1.5"
+            type="password"
+            autoComplete="new-password"
+            minLength={6}
+            required
+            value={form.password}
+            onChange={(e) => set('password', e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="label" htmlFor="code">Código del camp</label>
+          <input
+            id="code"
+            className="input mt-1.5 font-bold uppercase tracking-widest"
+            required
+            placeholder="MOA2026"
+            value={form.code}
+            onChange={(e) => set('code', e.target.value)}
+          />
+        </div>
+
+        <FormError>{error}</FormError>
+
+        <button className="btn-accent w-full py-3 text-base shadow-pop" disabled={loading}>
+          {loading ? 'Creando…' : 'Empezar el camp'}
+        </button>
+      </form>
+    </AuthShell>
   );
 }

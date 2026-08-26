@@ -206,9 +206,22 @@ create policy "profiles_insert_self" on public.profiles
   for insert with check (id = auth.uid());
 
 -- responses
-drop policy if exists "responses_rw_own" on public.responses;
-create policy "responses_rw_own" on public.responses
-  for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+-- El bloqueo de dias vive en migration_01_day_access.sql, que sustituye esta
+-- politica por otra que ademas comprueba que el dia este ABIERTO.
+-- El bloque de abajo hace que el ORDEN DE EJECUCION NO IMPORTE: si day_access
+-- ya existe, este archivo no toca las politicas de responses. Asi, volver a
+-- ejecutar schema.sql sobre una base ya migrada no reabre los cuatro dias.
+do $$
+begin
+  if to_regclass('public.day_access') is null then
+    -- Primera instalacion: politica simple (aun no hay control de dias).
+    execute 'drop policy if exists "responses_rw_own" on public.responses';
+    execute 'create policy "responses_rw_own" on public.responses
+               for all using (user_id = auth.uid()) with check (user_id = auth.uid())';
+  else
+    raise notice 'day_access existe: se conservan las politicas de bloqueo de dias.';
+  end if;
+end $$;
 
 drop policy if exists "responses_read_staff" on public.responses;
 create policy "responses_read_staff" on public.responses
@@ -294,6 +307,13 @@ exception when duplicate_object then null; end $$;
 do $$ begin
   alter publication supabase_realtime add table public.ai_reports;
 exception when duplicate_object then null; end $$;
+
+-- ---------------------------------------------------------------------------
+-- 12. SIGUIENTE PASO
+-- ---------------------------------------------------------------------------
+-- Ejecuta ahora, en este orden:
+--   1) supabase/migration_01_day_access.sql   (bloqueo de dias por moderador)
+--   2) supabase/seed_staff.sql                (convertir usuarios en moderadores)
 
 -- ============================================================================
 -- FIN

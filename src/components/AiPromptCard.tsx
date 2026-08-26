@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { SparkIcon, CheckIcon } from '@/components/ui/Icons';
+import { Quote } from '@/components/brand/Moa';
 import type { Field } from '@/lib/workbook';
 
 type Props = {
@@ -19,71 +21,116 @@ export function AiPromptCard({ field, day, sectionId }: Props) {
   const [open, setOpen] = useState(false);
   const [extra, setExtra] = useState('');
   const [answer, setAnswer] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
   async function run() {
     setLoading(true);
     setAnswer(null);
+    setFailed(false);
     try {
       const res = await fetch('/api/ai/assist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ day, sectionId, prompt: field.prompt, extra }),
       });
-      const json = await res.json();
-      setAnswer(res.ok ? json.text : `Error: ${json.error ?? 'no disponible'}`);
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.text) {
+        setFailed(true);
+        setAnswer(json?.error ?? 'El asistente no está disponible ahora mismo.');
+      } else {
+        setAnswer(json.text);
+      }
     } catch {
+      setFailed(true);
       setAnswer('Error de conexión con el asistente.');
     } finally {
       setLoading(false);
     }
   }
 
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(field.prompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      /* el portapapeles puede estar bloqueado: no rompemos nada */
+    }
+  }
+
   return (
-    <div className="rounded-2xl border border-brand-200 bg-brand-50/70 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-bold uppercase tracking-wide text-brand-700">AI prompt</p>
-        <span className="text-[11px] font-semibold text-brand-500">Read first. Think second. Ask AI third.</span>
+    <div className="relative overflow-hidden rounded-3xl border-2 border-plum-100 bg-plum-50/60 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="eyebrow flex items-center gap-2 text-plum-500">
+          <SparkIcon className="h-4 w-4" />
+          AI prompt
+        </p>
+        <span className="text-[11px] font-extrabold text-plum-300">
+          Read first. Think second. Ask AI third.
+        </span>
       </div>
 
-      <p className="mt-2 rounded-xl bg-white p-3 font-serif text-sm italic text-ink/85">“{field.prompt}”</p>
-      {field.note && <p className="mt-2 text-xs text-ink/70">{field.note}</p>}
+      <blockquote className="relative mt-3 rounded-2xl bg-white p-4 pl-11 text-sm italic leading-relaxed text-ink/85">
+        <Quote className="absolute left-3.5 top-4 h-4 w-5 text-sun-400" />
+        {field.prompt}
+      </blockquote>
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      {field.note && <p className="mt-2.5 text-xs font-semibold leading-relaxed text-plum-400">{field.note}</p>}
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button type="button" className="btn-ghost btn-sm" onClick={copy}>
+          {copied ? (
+            <>
+              <CheckIcon className="h-3.5 w-3.5" /> Copiado
+            </>
+          ) : (
+            'Copiar prompt'
+          )}
+        </button>
         <button
           type="button"
-          className="btn-ghost"
-          onClick={async () => {
-            await navigator.clipboard.writeText(field.prompt);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
-          }}
+          className="btn-sm btn bg-plum-500 text-white hover:bg-plum-600"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
         >
-          {copied ? 'Copiado ✓' : 'Copiar prompt'}
-        </button>
-        <button type="button" className="btn-primary" onClick={() => setOpen((o) => !o)}>
           {open ? 'Cerrar asistente' : 'Usar asistente aquí'}
         </button>
       </div>
 
       {open && (
-        <div className="mt-3 space-y-2 rounded-xl border border-brand-100 bg-white p-3">
-          <label className="label text-xs">Añade tu contexto (palabras, ideas, tu borrador…)</label>
+        <div className="mt-4 space-y-3 rounded-2xl border-2 border-plum-100 bg-white p-4 animate-fade-up">
+          <label className="label text-xs" htmlFor={`${field.key}-extra`}>
+            Añade tu contexto (palabras, ideas, tu borrador…)
+          </label>
           <textarea
+            id={`${field.key}-extra`}
             className="input"
             rows={3}
             value={extra}
             placeholder="Ej.: disappointed, overnight, growth mindset…"
             onChange={(e) => setExtra(e.target.value)}
           />
-          <button type="button" className="btn-accent" disabled={loading} onClick={run}>
+
+          <button type="button" className="btn-accent btn-sm" disabled={loading} onClick={run}>
+            <SparkIcon className="h-3.5 w-3.5" />
             {loading ? 'Pensando…' : 'Enviar'}
           </button>
-          {answer && (
-            <div className="whitespace-pre-wrap rounded-xl bg-brand-50 p-3 text-sm leading-relaxed">{answer}</div>
+
+          {loading && <div className="skeleton h-20 w-full" />}
+
+          {answer && !loading && (
+            <div
+              className={`whitespace-pre-wrap rounded-2xl p-4 text-sm leading-relaxed ${
+                failed ? 'bg-coral-50 font-semibold text-coral-700' : 'bg-teal-50 text-ink/85'
+              }`}
+            >
+              {answer}
+            </div>
           )}
-          <p className="text-[11px] text-ink/50">
+
+          <p className="text-[11px] font-semibold text-ink/45">
             Esta consulta queda registrada para tu moderador. La IA no escribe tus respuestas por ti.
           </p>
         </div>

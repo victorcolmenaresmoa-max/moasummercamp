@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { CheckIcon } from '@/components/ui/Icons';
 import type { Checkpoint } from '@/lib/workbook';
 import type { CheckpointRow, CheckpointStatus } from '@/types/database';
 
@@ -20,11 +21,13 @@ export function CheckpointApproval({ participantId, moderatorId, day, checkpoint
   const [initials, setInitials] = useState(row?.moderator_initials ?? '');
   const [comments, setComments] = useState(row?.comments ?? '');
   const [saving, setSaving] = useState<CheckpointStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function save(status: CheckpointStatus) {
     setSaving(status);
+    setError(null);
     const supabase = createClient();
-    await supabase.from('checkpoints').upsert(
+    const { error } = await supabase.from('checkpoints').upsert(
       {
         user_id: participantId,
         day,
@@ -38,6 +41,7 @@ export function CheckpointApproval({ participantId, moderatorId, day, checkpoint
       },
       { onConflict: 'user_id,day,checkpoint_number' },
     );
+    if (error) setError(error.message);
     setSaving(null);
     router.refresh();
   }
@@ -45,35 +49,41 @@ export function CheckpointApproval({ participantId, moderatorId, day, checkpoint
   const toggle = (i: string) =>
     setItems((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]));
 
-  const statusChip =
+  const chip =
     row?.status === 'approved'
-      ? 'bg-moss-100 text-moss-500'
+      ? 'bg-moss-500 text-white'
       : row?.status === 'needs_work'
-      ? 'bg-clay-100 text-clay-500'
-      : 'bg-amber-100 text-amber-800';
+        ? 'bg-coral-500 text-white'
+        : 'bg-sun-400 text-plum-500';
 
   return (
-    <div className="rounded-2xl border-2 border-dashed border-brand-200 bg-brand-50/50 p-4">
+    <div className="rounded-3xl border-2 border-dashed border-teal-200 bg-teal-50/50 p-5">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-bold text-brand-800">CHECKPOINT {checkpoint.number}</p>
-        <span className={`chip ${statusChip}`}>
+        <p className="h-display text-sm text-teal-800">CHECKPOINT {checkpoint.number}</p>
+        <span className={`chip ${chip}`}>
           {row?.status === 'approved' ? 'Aprobado' : row?.status === 'needs_work' ? 'Por mejorar' : 'Pendiente'}
         </span>
       </div>
 
-      <div className="mt-3 space-y-1">
+      <div className="mt-3.5 space-y-2">
         {checkpoint.items.map((i) => (
-          <label key={i} className="flex cursor-pointer items-start gap-2 text-sm text-ink/80">
-            <input type="checkbox" className="mt-1" checked={items.includes(i)} onChange={() => toggle(i)} />
+          <label key={i} className="flex cursor-pointer items-start gap-2.5 text-sm text-ink/80">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 shrink-0 accent-teal-500"
+              checked={items.includes(i)}
+              onChange={() => toggle(i)}
+            />
             {i}
           </label>
         ))}
       </div>
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-[120px_1fr]">
+      <div className="mt-4 grid gap-2 sm:grid-cols-[130px_1fr]">
         <input
           className="input"
           placeholder="Iniciales"
+          aria-label="Iniciales del moderador"
           value={initials}
           onChange={(e) => setInitials(e.target.value.toUpperCase())}
           maxLength={6}
@@ -81,17 +91,21 @@ export function CheckpointApproval({ participantId, moderatorId, day, checkpoint
         <input
           className="input"
           placeholder="Comentario para el docente (opcional)"
+          aria-label="Comentario"
           value={comments}
           onChange={(e) => setComments(e.target.value)}
         />
       </div>
 
-      <div className="mt-3 flex gap-2">
-        <button className="btn-primary py-1.5" disabled={!!saving} onClick={() => save('approved')}>
+      {error && <p className="mt-2 text-xs font-bold text-coral-600">{error}</p>}
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button className="btn-primary btn-sm py-2" disabled={!!saving} onClick={() => save('approved')}>
+          <CheckIcon className="h-3.5 w-3.5" />
           {saving === 'approved' ? 'Guardando…' : 'Aprobar'}
         </button>
-        <button className="btn-ghost py-1.5" disabled={!!saving} onClick={() => save('needs_work')}>
-          Por mejorar
+        <button className="btn-ghost btn-sm py-2" disabled={!!saving} onClick={() => save('needs_work')}>
+          {saving === 'needs_work' ? 'Guardando…' : 'Por mejorar'}
         </button>
       </div>
     </div>

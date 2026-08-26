@@ -1,29 +1,37 @@
 import Link from 'next/link';
 import { requireStaff } from '@/lib/supabase/session';
 import { SignOutButton } from '@/components/SignOutButton';
+import { MoaLogo } from '@/components/brand/Moa';
 
 export default async function ModeratorLayout({ children }: { children: React.ReactNode }) {
   const profile = await requireStaff();
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-black/5 bg-brand-900 text-white no-print">
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-30 bg-teal-700 text-white shadow-moa no-print">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3">
-          <Link href="/moderator" className="leading-tight">
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-accent-400">MOA Education</p>
-            <p className="font-serif text-lg font-bold">Panel del moderador</p>
+          <Link href="/moderator" aria-label="Panel del moderador" className="flex items-center gap-3">
+            <MoaLogo tone="light" />
+            <span className="hidden h-8 w-px bg-white/20 sm:block" />
+            <span className="hidden text-sm font-extrabold text-sun-400 sm:block">
+              Panel del moderador
+            </span>
           </Link>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className="hidden text-right sm:block">
-              <p className="text-sm font-semibold">{profile.full_name}</p>
-              <p className="text-xs text-white/60 uppercase">{profile.role}</p>
+              <p className="text-sm font-extrabold leading-tight">{profile.full_name}</p>
+              <p className="eyebrow text-white/50">{profile.role}</p>
             </div>
-            <Link href="/lab" className="btn-ghost">Ver workbook</Link>
-            <SignOutButton />
+            <Link href="/lab" className="btn-onDark btn-sm">
+              Ver workbook
+            </Link>
+            <SignOutButton tone="light" />
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-5 py-8">{children}</main>
+
+      <main className="mx-auto w-full max-w-7xl grow px-5 py-8">{children}</main>
     </div>
   );
 }

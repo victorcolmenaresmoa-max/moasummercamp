@@ -2,13 +2,32 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireProfile } from '@/lib/supabase/session';
-import { getDay } from '@/lib/workbook';
+import { getOpenDays, isStaff } from '@/lib/access';
+import { getDay, totalFields } from '@/lib/workbook';
 import { ReadingText } from '@/components/ReadingText';
 import { WorkbookField } from '@/components/WorkbookField';
 import { CheckpointBox } from '@/components/CheckpointBox';
+import { DayLocked } from '@/components/DayLocked';
+import { DayFinish } from '@/components/DayFinish';
+import { LabRealtime } from '@/components/LabRealtime';
+import { ArrowLeftIcon } from '@/components/ui/Icons';
+import { MoaPattern } from '@/components/brand/Moa';
+import { hasContent, pct } from '@/lib/utils';
 import type { CheckpointRow, ResponseRow } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
+
+const HEADER_TONE: Record<number, string> = {
+  1: 'from-teal-500 to-teal-700',
+  2: 'from-teal-600 to-plum-500',
+  3: 'from-plum-500 to-teal-700',
+  4: 'from-teal-500 to-teal-800',
+};
+
+export async function generateMetadata({ params }: { params: { day: string } }) {
+  const day = getDay(Number(params.day));
+  return { title: day ? `Day ${day.day} · ${day.theme}` : 'Reading Lab' };
+}
 
 export default async function DayPage({ params }: { params: { day: string } }) {
   const dayNumber = Number(params.day);
@@ -18,34 +37,74 @@ export default async function DayPage({ params }: { params: { day: string } }) {
   const profile = await requireProfile();
   const supabase = createClient();
 
-  const [{ data: responses }, { data: checkpoints }] = await Promise.all([
+  const [{ data: responses }, { data: checkpoints }, openDays] = await Promise.all([
     supabase.from('responses').select('*').eq('user_id', profile.id).eq('day', dayNumber),
     supabase.from('checkpoints').select('*').eq('user_id', profile.id).eq('day', dayNumber),
+    getOpenDays(),
   ]);
+
+  const staff = isStaff(profile);
+  const unlocked = staff || openDays.has(dayNumber);
+
+  // ---------------------------------------------------------------- CANDADO
+  // Doble muro: aquí no se pinta el contenido, y en Postgres la política RLS
+  // rechaza cualquier escritura a este día. Ni copiando la URL se entra.
+  if (!unlocked) {
+    return (
+      <>
+        <LabRealtime userId={profile.id} />
+        <DayLocked day={day} />
+      </>
+    );
+  }
 
   const answers = new Map((responses ?? []).map((r: ResponseRow) => [r.field_key, r.value]));
   const cps = new Map((checkpoints ?? []).map((c: CheckpointRow) => [c.checkpoint_number, c]));
 
-  const prev = getDay(dayNumber - 1);
-  const next = getDay(dayNumber + 1);
+  const done = (responses ?? []).filter((r) => hasContent(r.value)).length;
+  const total = totalFields(dayNumber);
+  const progress = pct(done, total);
 
   return (
     <div className="space-y-8">
-      {/* Cabecera del dia */}
-      <header className="card overflow-hidden">
-        <div className="bg-gradient-to-r from-brand-900 to-brand-700 px-6 py-6 text-white">
-          <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent-400">
-            Day {day.day} · {day.theme}
-          </p>
-          <h1 className="mt-1 font-serif text-3xl font-bold">{day.title}</h1>
-          <p className="mt-2 text-sm text-white/80">Guiding question: {day.guidingQuestion}</p>
-          <p className="mt-1 text-xs text-white/60">Reading Lab: {day.schedule}</p>
+      <LabRealtime userId={profile.id} />
+
+      {/* --------------------------------------------------------- MIGA DE PAN */}
+      <Link
+        href="/lab"
+        prefetch
+        className="inline-flex items-center gap-2 text-sm font-bold text-teal-600 transition hover:text-teal-800 no-print"
+      >
+        <ArrowLeftIcon className="h-4 w-4" />
+        Mi panel
+      </Link>
+
+      {/* ------------------------------------------------------ CABECERA DEL DÍA */}
+      <header className="card relative isolate overflow-hidden">
+        <div className={`relative bg-gradient-to-br px-6 py-7 text-white sm:px-8 ${HEADER_TONE[day.day]}`}>
+          <MoaPattern variant="soft" />
+          <div className="relative">
+            <p className="eyebrow text-sun-400">
+              Day {day.day} · {day.theme}
+            </p>
+            <h1 className="h-display mt-2 text-3xl leading-tight sm:text-4xl">{day.title}</h1>
+            <p className="mt-3 max-w-2xl text-sm font-semibold text-white/85">
+              Guiding question: {day.guidingQuestion}
+            </p>
+            <p className="mt-1 text-xs font-semibold text-white/55">Reading Lab: {day.schedule}</p>
+          </div>
         </div>
-        <div className="px-6 py-5">
-          <p className="text-xs font-bold uppercase tracking-wide text-brand-700">By the end of this lab I will be able to…</p>
-          <ul className="mt-2 grid gap-1 text-sm text-ink/75 sm:grid-cols-2">
+
+        <div className="px-6 py-5 sm:px-8">
+          <p className="eyebrow text-teal-600">By the end of this lab I will be able to…</p>
+          <ul className="mt-3 grid gap-1.5 text-sm text-ink/75 sm:grid-cols-2">
             {day.objectives.map((o) => (
-              <li key={o} className="flex gap-2"><span className="text-accent-500">▸</span>{o}</li>
+              <li key={o} className="flex gap-2">
+                <span className="mt-0.5 shrink-0 font-bold text-coral-500" aria-hidden="true">
+                  ▸
+                </span>
+                {o}
+              </li>
             ))}
           </ul>
         </div>
@@ -53,18 +112,17 @@ export default async function DayPage({ params }: { params: { day: string } }) {
 
       <ReadingText title={day.reading.title} blocks={day.reading.blocks} />
 
-      {/* Secciones */}
+      {/* ------------------------------------------------------------ SECCIONES */}
       {day.sections.map((section) => (
-        <section key={section.id} className="card p-6">
-          <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-brand-50 pb-3">
-            <h2 className="font-serif text-xl font-bold text-brand-900">{section.title}</h2>
-            {section.minutes && (
-              <span className="chip bg-brand-50 text-brand-600">{section.minutes} min</span>
-            )}
+        <section key={section.id} className="card p-6 sm:p-7" id={section.id}>
+          <div className="flex flex-wrap items-baseline justify-between gap-2 border-b-2 border-teal-50 pb-3">
+            <h2 className="h-display text-xl text-teal-900">{section.title}</h2>
+            {section.minutes && <span className="chip bg-teal-50 text-teal-600">{section.minutes} min</span>}
           </div>
-          {section.intro && <p className="mt-3 text-sm text-ink/70">{section.intro}</p>}
 
-          <div className="mt-5 space-y-6">
+          {section.intro && <p className="mt-3 text-sm leading-relaxed text-ink/65">{section.intro}</p>}
+
+          <div className="mt-6 space-y-7">
             {section.fields.map((field) => (
               <WorkbookField
                 key={field.key}
@@ -78,34 +136,30 @@ export default async function DayPage({ params }: { params: { day: string } }) {
           </div>
 
           {section.checkpoint && (
-            <div className="mt-6">
+            <div className="mt-7">
               <CheckpointBox checkpoint={section.checkpoint} row={cps.get(section.checkpoint.number)} />
             </div>
           )}
         </section>
       ))}
 
-      {/* Checklist final */}
-      <section className="card p-6">
-        <h2 className="font-serif text-xl font-bold text-brand-900">MY EVIDENCE FOR TODAY</h2>
-        <ul className="mt-3 space-y-1 text-sm text-ink/75">
+      {/* --------------------------------------------------- CHECKLIST FINAL */}
+      <section className="card p-6 sm:p-7">
+        <h2 className="h-display text-xl text-teal-900">MY EVIDENCE FOR TODAY</h2>
+        <ul className="mt-4 space-y-2 text-sm text-ink/75">
           {day.finalChecklist.map((c) => (
-            <li key={c} className="flex gap-2"><span className="text-brand-300">□</span>{c}</li>
+            <li key={c} className="flex gap-2.5">
+              <span className="mt-0.5 shrink-0 text-teal-200" aria-hidden="true">
+                ■
+              </span>
+              {c}
+            </li>
           ))}
         </ul>
       </section>
 
-      {/* Navegacion */}
-      <nav className="flex items-center justify-between no-print">
-        {prev ? (
-          <Link href={`/lab/${prev.day}`} className="btn-ghost">← Day {prev.day} · {prev.theme}</Link>
-        ) : <span />}
-        {next ? (
-          <Link href={`/lab/${next.day}`} className="btn-primary">Day {next.day} · {next.theme} →</Link>
-        ) : (
-          <Link href="/lab" className="btn-primary">Volver a mi workbook</Link>
-        )}
-      </nav>
+      {/* ------------------------------------- CIERRE: SIEMPRE VUELVE AL PANEL */}
+      <DayFinish day={day.day} theme={day.theme} progress={progress} done={done} total={total} />
     </div>
   );
 }

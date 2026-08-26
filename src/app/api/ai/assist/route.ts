@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { callLLM } from '@/lib/ai/anthropic';
+import { callLLM } from '@/lib/ai/llm';
 import { TUTOR_SYSTEM, tutorUserMessage } from '@/lib/ai/prompts';
 
 export const runtime = 'nodejs';

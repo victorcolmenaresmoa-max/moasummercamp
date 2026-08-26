@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { requireProfile } from '@/lib/supabase/session';
 import { SignOutButton } from '@/components/SignOutButton';
+import { MoaLogo } from '@/components/brand/Moa';
 import { CAMPUS_LABELS } from '@/lib/workbook';
 
 export default async function LabLayout({ children }: { children: React.ReactNode }) {
@@ -8,26 +9,36 @@ export default async function LabLayout({ children }: { children: React.ReactNod
   const isStaff = profile.role !== 'participant';
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-black/5 bg-white/85 backdrop-blur no-print">
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-30 border-b border-teal-900/5 bg-paper/85 backdrop-blur-md no-print">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-3">
-          <Link href="/lab" className="leading-tight">
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-accent-600">MOA Education</p>
-            <p className="font-serif text-lg font-bold text-brand-900">Reading Lab 2026</p>
+          <Link href="/lab" aria-label="Ir a mi workbook">
+            <MoaLogo />
           </Link>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className="hidden text-right sm:block">
-              <p className="text-sm font-semibold text-brand-800">{profile.full_name}</p>
-              <p className="text-xs text-ink/55">{profile.campus ? CAMPUS_LABELS[profile.campus] : 'Sin sede'}</p>
+              <p className="text-sm font-extrabold leading-tight text-teal-800">{profile.full_name}</p>
+              <p className="text-xs font-semibold text-ink/50">
+                {profile.campus ? CAMPUS_LABELS[profile.campus] : 'Sin sede'}
+              </p>
             </div>
-            {isStaff && <Link href="/moderator" className="btn-ghost">Panel moderador</Link>}
+            {isStaff && (
+              <Link href="/moderator" className="btn-ghost btn-sm">
+                Panel moderador
+              </Link>
+            )}
             <SignOutButton />
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-5 py-8">{children}</main>
-      <footer className="pb-10 text-center text-xs text-ink/45 no-print">
-        Read first. Think second. Ask AI third. · MOA Education | Immersive Summer Camp 2026
+
+      <main className="mx-auto w-full max-w-5xl grow px-5 py-8">{children}</main>
+
+      <footer className="pb-10 pt-4 text-center no-print">
+        <p className="text-xs font-semibold text-ink/40">
+          Read first. Think second. Ask AI third. · MOA Education | Immersive Summer Camp 2026
+        </p>
       </footer>
     </div>
   );

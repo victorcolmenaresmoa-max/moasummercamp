@@ -2,15 +2,25 @@
 
 import { cn } from '@/lib/utils';
 
-export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'locked';
+
+const MAP: Record<Exclude<SaveStatus, 'idle'>, [string, string]> = {
+  saving: ['Guardando…', 'bg-teal-50 text-teal-600'],
+  saved: ['Guardado', 'bg-moss-100 text-moss-600'],
+  error: ['No se pudo guardar', 'bg-coral-100 text-coral-700'],
+  locked: ['Día cerrado', 'bg-plum-50 text-plum-400'],
+};
 
 export function SaveState({ status }: { status: SaveStatus }) {
   if (status === 'idle') return null;
-  const map = {
-    saving: ['Guardando…', 'text-brand-500'],
-    saved: ['Guardado ✓', 'text-moss-500'],
-    error: ['Error al guardar', 'text-clay-500'],
-  } as const;
-  const [text, color] = map[status];
-  return <span className={cn('text-xs font-semibold', color)}>{text}</span>;
+  const [text, tone] = MAP[status];
+  return (
+    <span
+      aria-live="polite"
+      className={cn('chip shrink-0 animate-pop-in whitespace-nowrap', tone)}
+    >
+      {status === 'saved' && <span aria-hidden="true">✓</span>}
+      {text}
+    </span>
+  );
 }

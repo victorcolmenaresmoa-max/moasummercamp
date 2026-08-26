@@ -3,43 +3,114 @@
 @tailwind utilities;
 
 :root {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* Si Google Fonts no cargara, el fallback del sistema mantiene el diseno intacto. */
+  --font-display: 'Poppins', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Nunito Sans', 'Segoe UI', ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
-html, body { height: 100%; }
+@layer base {
+  html { -webkit-tap-highlight-color: transparent; scroll-behavior: smooth; }
+  html, body { height: 100%; }
 
-body {
-  @apply bg-paper text-ink antialiased;
-  background-image: radial-gradient(circle at 12% -10%, rgba(46,103,165,.10), transparent 45%),
-                    radial-gradient(circle at 95% 0%, rgba(242,180,65,.14), transparent 40%);
-  background-attachment: fixed;
+  body {
+    @apply bg-paper text-ink antialiased;
+    background-image:
+      radial-gradient(900px 520px at 8% -12%, rgba(22, 128, 142, .13), transparent 60%),
+      radial-gradient(700px 480px at 100% 4%, rgba(249, 208, 94, .20), transparent 58%),
+      radial-gradient(620px 420px at 50% 108%, rgba(230, 40, 100, .09), transparent 60%);
+    background-attachment: fixed;
+  }
+
+  ::selection { @apply bg-sun-400 text-plum-500; }
+
+  /* Scrollbar con sabor MOA */
+  * { scrollbar-width: thin; scrollbar-color: theme('colors.teal.200') transparent; }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-thumb { @apply rounded-full bg-teal-200; }
+  *::-webkit-scrollbar-thumb:hover { @apply bg-teal-300; }
+
+  :focus-visible { @apply outline-none ring-2 ring-sun-400 ring-offset-2 ring-offset-paper; }
 }
 
 @layer components {
+  /* ---------------------------------------------------------- superficies */
   .card {
-    @apply rounded-2xl border border-black/5 bg-white shadow-card;
+    @apply rounded-3xl border border-teal-900/5 bg-white shadow-moa;
   }
-  .label {
-    @apply block text-sm font-semibold text-brand-800;
-  }
+  .card-flat { @apply rounded-3xl border border-teal-900/5 bg-white; }
+
+  .surface-teal { @apply bg-teal-500 text-white; }
+  .surface-plum { @apply bg-plum-500 text-white; }
+
+  /* --------------------------------------------------------------- texto */
+  .label { @apply block text-sm font-bold text-teal-800; }
+  .eyebrow { @apply text-[10px] font-extrabold uppercase tracking-[.28em]; }
+  .h-display { @apply font-display font-extrabold tracking-tight; }
+
+  /* -------------------------------------------------------------- inputs */
   .input {
-    @apply w-full rounded-xl border border-brand-100 bg-white px-3 py-2 text-sm outline-none
-           transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100;
+    @apply w-full rounded-2xl border-2 border-teal-100 bg-white px-4 py-2.5 text-sm text-ink
+           placeholder:text-ink/35 outline-none transition
+           focus:border-teal-400 focus:ring-4 focus:ring-teal-100/70
+           disabled:cursor-not-allowed disabled:bg-teal-50/60 disabled:text-ink/50;
   }
+  select.input { @apply cursor-pointer appearance-none bg-[length:16px] bg-[right_.9rem_center] bg-no-repeat pr-10;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230A6872' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  }
+
+  /* ------------------------------------------------------------- botones */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold
-           transition disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-full px-5 py-2.5
+           text-sm font-bold transition-all duration-150 active:translate-y-px
+           disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0;
   }
-  .btn-primary { @apply btn bg-brand-600 text-white hover:bg-brand-700; }
-  .btn-accent  { @apply btn bg-accent-500 text-white hover:bg-accent-600; }
-  .btn-ghost   { @apply btn border border-brand-100 bg-white text-brand-700 hover:bg-brand-50; }
-  .chip        { @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold; }
-  .reading p   { @apply mb-4 leading-relaxed; }
+  .btn-primary  { @apply btn bg-teal-600 text-white hover:bg-teal-700 hover:shadow-moa; }
+  .btn-accent   { @apply btn bg-sun-400 text-plum-500 hover:bg-sun-500; }
+  .btn-coral    { @apply btn bg-coral-500 text-white hover:bg-coral-600; }
+  .btn-ghost    { @apply btn border-2 border-teal-100 bg-white text-teal-700 hover:border-teal-200 hover:bg-teal-50; }
+  .btn-onDark   { @apply btn border-2 border-white/25 bg-white/10 text-white backdrop-blur hover:bg-white/20; }
+  .btn-sm       { @apply px-3.5 py-1.5 text-xs; }
+
+  .chip { @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold; }
+
+  /* --------------------------------------------------------- tipografía  */
+  .reading p { @apply mb-4 leading-[1.85]; }
+  .reading h3:first-child { @apply mt-0; }
+
+  /* ------------------------------------------------------------ skeleton */
+  .skeleton { @apply relative overflow-hidden rounded-2xl bg-teal-100/60; }
+  .skeleton::after {
+    content: ''; @apply absolute inset-0 -translate-x-full animate-shimmer;
+    background-image: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent);
+  }
+
+  /* ------------------------------------------------ patrón de marca MOA  */
+  .moa-dots {
+    background-image: radial-gradient(currentColor 1.6px, transparent 1.6px);
+    background-size: 16px 16px;
+  }
+  .moa-stripes {
+    background-image: repeating-linear-gradient(-45deg, currentColor 0 6px, transparent 6px 14px);
+  }
 }
 
-/* Impresion del workbook (evidencia en papel si hace falta) */
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+/* Respeta a quien prefiere menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important;
+  }
+}
+
+/* Impresión del workbook (evidencia en papel) */
 @media print {
   .no-print { display: none !important; }
-  body { background: #fff; }
+  body { background: #fff !important; background-image: none !important; }
   .card { box-shadow: none; border-color: #ddd; }
 }

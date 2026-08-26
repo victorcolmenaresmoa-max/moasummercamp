@@ -61,20 +61,12 @@ REGLAS:
 - Si un día está vacío o casi vacío, dilo explícitamente y baja las puntuaciones; no rellenes con supuestos.
 - El error del idioma (gramática en inglés) NO baja la nota: se evalúa el criterio pedagógico. Solo
   menciónalo si impide entender la idea.
-- Responde ÚNICAMENTE con un objeto JSON válido, sin texto antes ni después, sin markdown.
+- No inventes nada: si falta información, dilo.
 
-Formato exacto:
-{
-  "summary": "3-5 frases con el retrato profesional del docente.",
-  "strengths": [{"title": "...", "evidence": "Día X, Parte Y: ..."}],
-  "growth_areas": [{"title": "...", "evidence": "Día X, Parte Y: ...", "suggestion": "acción concreta y observable"}],
-  "evidence_use": 1-5,
-  "pedagogical_depth": 1-5,
-  "reflection_depth": 1-5,
-  "next_step": "La única cosa que este docente debería trabajar primero al volver a su aula.",
-  "moderator_notes": "1-2 frases: qué debería preguntarle o reforzar el moderador en el MOA Summit."
-}
-Entre 2 y 4 elementos en strengths y entre 2 y 4 en growth_areas.`;
+Devuelve el resultado siguiendo el esquema estructurado que recibes (summary, strengths,
+growth_areas, evidence_use, pedagogical_depth, reflection_depth, next_step, moderator_notes).
+Entre 2 y 4 elementos en strengths y entre 2 y 4 en growth_areas. Las tres puntuaciones son
+enteros del 1 al 5. \`next_step\` es UNA sola cosa, concreta y observable.`;
 
 /** Convierte las filas de responses en un documento legible para el modelo. */
 export function buildWorkbookTranscript(rows: ResponseRow[], teacherName: string, campus: string | null) {

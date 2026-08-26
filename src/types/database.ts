@@ -68,6 +68,24 @@ export type AiInteractionRow = {
   created_at: string;
 };
 
+export type DayAccessRow = {
+  id: string;
+  campus: Campus | null;
+  day: number;
+  is_open: boolean;
+  opened_by: string | null;
+  opened_at: string | null;
+  updated_at: string;
+};
+
+export type ParticipantDayAccessRow = {
+  user_id: string;
+  day: number;
+  is_open: boolean;
+  granted_by: string | null;
+  updated_at: string;
+};
+
 export type ParticipantProgressRow = {
   id: string;
   full_name: string;
@@ -117,11 +135,31 @@ export interface Database {
         Update: Partial<AiInteractionRow>;
         Relationships: [];
       };
+      day_access: {
+        Row: DayAccessRow;
+        Insert: Partial<DayAccessRow> & { day: number };
+        Update: Partial<DayAccessRow>;
+        Relationships: [];
+      };
+      participant_day_access: {
+        Row: ParticipantDayAccessRow;
+        Insert: Partial<ParticipantDayAccessRow> & { user_id: string; day: number };
+        Update: Partial<ParticipantDayAccessRow>;
+        Relationships: [];
+      };
     };
     Views: {
       participant_progress: { Row: ParticipantProgressRow; Relationships: [] };
     };
-    Functions: {};
+    Functions: {
+      my_open_days: { Args: Record<string, never>; Returns: number[] };
+      day_is_open: { Args: { p_user: string; p_day: number }; Returns: boolean };
+      is_staff: { Args: Record<string, never>; Returns: boolean };
+      set_day_access: {
+        Args: { p_campus: Campus | null; p_day: number; p_open: boolean };
+        Returns: DayAccessRow;
+      };
+    };
     Enums: { campus: Campus; user_role: UserRole; checkpoint_status: CheckpointStatus };
     CompositeTypes: {};
   };

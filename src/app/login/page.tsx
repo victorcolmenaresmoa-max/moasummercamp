@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { AuthShell, FormError } from '@/components/auth/AuthShell';
 
 function LoginForm() {
   const router = useRouter();
@@ -17,49 +18,78 @@ function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
     const supabase = createClient();
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+
     if (error) {
-      setError(error.message);
+      setError(
+        error.message === 'Invalid login credentials'
+          ? 'Correo o contraseña incorrectos.'
+          : error.message,
+      );
       setLoading(false);
       return;
     }
+
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
-    const dest = params.get('next') ?? (profile?.role === 'participant' ? '/lab' : '/moderator');
+    const dest = params.get('next') ?? (!profile || profile.role === 'participant' ? '/lab' : '/moderator');
     router.replace(dest);
     router.refresh();
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
-      <div className="card p-8">
-        <p className="text-xs font-bold uppercase tracking-[0.25em] text-accent-600">MOA Reading Lab</p>
-        <h1 className="mt-2 font-serif text-2xl font-bold text-brand-900">Entrar</h1>
+    <AuthShell
+      title="Entrar"
+      subtitle="Tu workbook te espera donde lo dejaste."
+      footer={
+        <>
+          ¿Primera vez?{' '}
+          <Link href="/signup" className="font-bold text-teal-600 underline-offset-4 hover:underline">
+            Regístrate aquí
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={onSubmit} className="space-y-5">
+        <div>
+          <label className="label" htmlFor="email">Correo</label>
+          <input
+            id="email"
+            className="input mt-1.5"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="label" htmlFor="password">Contraseña</label>
+          <input
+            id="password"
+            className="input mt-1.5"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
 
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <div>
-            <label className="label">Correo</label>
-            <input className="input mt-1" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div>
-            <label className="label">Contraseña</label>
-            <input className="input mt-1" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-          </div>
-          {error && <p className="rounded-xl bg-clay-100 px-3 py-2 text-sm text-clay-500">{error}</p>}
-          <button className="btn-primary w-full" disabled={loading}>{loading ? 'Entrando…' : 'Entrar'}</button>
-        </form>
+        <FormError>{error}</FormError>
 
-        <p className="mt-6 text-center text-sm text-ink/60">
-          ¿Primera vez? <Link href="/signup" className="font-semibold text-brand-600">Regístrate aquí</Link>
-        </p>
-      </div>
-    </main>
+        <button className="btn-primary w-full py-3 text-base" disabled={loading}>
+          {loading ? 'Entrando…' : 'Entrar'}
+        </button>
+      </form>
+    </AuthShell>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense fallback={null}>
       <LoginForm />
     </Suspense>
   );

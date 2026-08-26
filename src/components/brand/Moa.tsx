@@ -1,0 +1,150 @@
+/**
+ * Piezas gráficas de marca MOA Education.
+ * Todo es SVG inline: cero peticiones de red, escala perfecta y hereda color.
+ */
+
+/* -------------------------------------------------------------- LOGOTIPO */
+export function MoaMark({ className = 'h-9 w-9' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
+      <rect width="100" height="100" rx="24" className="fill-teal-500" />
+      <path
+        d="M78 4c0 24-56 20-56 46s56 22 56 46"
+        className="stroke-teal-700"
+        strokeWidth="26"
+        fill="none"
+        strokeLinecap="round"
+      />
+      {/* la "m" del logo */}
+      <path
+        d="M24 70V40c0-6 4-10 10-10s10 4 10 10v30M44 70V40c0-6 4-10 10-10s10 4 10 10v30"
+        stroke="#fff"
+        strokeWidth="11"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function MoaWordmark({ className = '' }: { className?: string }) {
+  return (
+    <span className={`inline-flex items-baseline gap-2 ${className}`}>
+      <span className="h-display text-[1.35em] leading-none tracking-tight">moa</span>
+      <span className="eyebrow leading-none opacity-80">Education</span>
+    </span>
+  );
+}
+
+export function MoaLogo({ className = '', tone = 'dark' }: { className?: string; tone?: 'dark' | 'light' }) {
+  return (
+    <span className={`inline-flex items-center gap-2.5 ${tone === 'light' ? 'text-white' : 'text-teal-900'} ${className}`}>
+      <MoaMark className="h-8 w-8 shrink-0" />
+      <span className="leading-none">
+        <span className="block h-display text-lg leading-none">moa</span>
+        <span className="eyebrow block leading-none opacity-70">Education</span>
+      </span>
+    </span>
+  );
+}
+
+/* ---------------------------------------------------- FIGURAS DECORATIVAS */
+type ShapeProps = { className?: string };
+
+export const Squiggle = ({ className = '' }: ShapeProps) => (
+  <svg viewBox="0 0 120 40" className={className} fill="none" aria-hidden="true">
+    <path
+      d="M4 20c0-9 7-16 16-16s16 7 16 16 7 16 16 16 16-7 16-16 7-16 16-16 16 7 16 16"
+      stroke="currentColor"
+      strokeWidth="9"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+export const Burst = ({ className = '' }: ShapeProps) => (
+  <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
+    <path
+      d="M50 0l9 26 22-16-10 25 27-3-22 16 22 16-27-3 10 25-22-16-9 26-9-26-22 16 10-25-27 3 22-16-22-16 27 3-10-25 22 16z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+export const Arc = ({ className = '' }: ShapeProps) => (
+  <svg viewBox="0 0 100 52" className={className} fill="none" aria-hidden="true">
+    <path d="M6 50a44 44 0 0 1 88 0" stroke="currentColor" strokeWidth="14" strokeLinecap="round" />
+  </svg>
+);
+
+export const Blob = ({ className = '' }: ShapeProps) => (
+  <svg viewBox="0 0 120 120" className={className} aria-hidden="true">
+    <path
+      d="M96 22c11 12 8 36 1 53s-19 27-36 29-38-4-48-19S6 47 17 32 40 6 59 5s26 5 37 17z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+export const Quote = ({ className = '' }: ShapeProps) => (
+  <svg viewBox="0 0 100 70" className={className} aria-hidden="true">
+    <path
+      d="M0 70V38C0 17 12 3 33 0l5 13c-11 3-17 9-18 18h16v39H0zm56 0V38C56 17 68 3 89 0l5 13c-11 3-17 9-18 18h16v39H56z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+export const Pill = ({ className = '' }: ShapeProps) => (
+  <svg viewBox="0 0 140 60" className={className} fill="none" aria-hidden="true">
+    <rect x="7" y="7" width="126" height="46" rx="23" stroke="currentColor" strokeWidth="10" />
+  </svg>
+);
+
+export const Gear = ({ className = '' }: ShapeProps) => (
+  <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
+    <path
+      d="M50 2l7 10 12-6 2 13 13 1-4 13 11 7-9 10 7 11-13 4 2 13-13-2-5 12-10-8-10 8-5-12-13 2 2-13-13-4 7-11-9-10 11-7-4-13 13-1 2-13 12 6z"
+      fill="currentColor"
+    />
+    <circle cx="50" cy="50" r="15" className="fill-paper" />
+  </svg>
+);
+
+/* --------------------------------------------------- FONDO DE MARCA (hero) */
+/**
+ * Lienzo decorativo con las figuras del key visual de MOA.
+ * `variant` cambia la densidad para no competir con el contenido.
+ */
+export function MoaPattern({
+  variant = 'full',
+  className = '',
+}: {
+  variant?: 'full' | 'soft';
+  className?: string;
+}) {
+  const soft = variant === 'soft';
+  return (
+    <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`} aria-hidden="true">
+      {/* onda madre del logo */}
+      <svg
+        viewBox="0 0 400 400"
+        preserveAspectRatio="xMidYMid slice"
+        className="absolute inset-0 h-full w-full text-white/[.07]"
+      >
+        <path d="M330 -40C330 90 70 70 70 200s260 110 260 240" stroke="currentColor" strokeWidth="90" fill="none" />
+      </svg>
+
+      <Burst className={`absolute -left-6 top-6 h-24 w-24 text-teal-700/60 ${soft ? 'opacity-40' : ''}`} />
+      <Squiggle className="absolute left-[22%] top-4 h-10 w-32 text-coral-500 opacity-90" />
+      <Arc className="absolute bottom-6 left-8 h-14 w-28 text-sun-400" />
+      <Pill className="absolute bottom-4 left-[38%] h-12 w-28 text-coral-400/80" />
+      <Quote className="absolute right-[28%] top-2 h-16 w-20 text-teal-700/50" />
+      <Gear className={`absolute -right-6 bottom-2 h-28 w-28 text-plum-500 ${soft ? 'opacity-50' : 'opacity-90'}`} />
+      <svg viewBox="0 0 100 200" className="absolute right-6 top-0 h-full w-16 text-sun-400/90" aria-hidden="true">
+        <path d="M50 0c40 25 40 45 0 70s-40 45 0 70 40 45 0 60" stroke="currentColor" strokeWidth="26" fill="none" />
+      </svg>
+    </div>
+  );
+}
