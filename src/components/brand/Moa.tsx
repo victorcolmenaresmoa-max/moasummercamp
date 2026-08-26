@@ -1,30 +1,35 @@
+import Image from 'next/image';
+import moaLogo from '../../../public/moa-logo.png';
+
 /**
  * Piezas gráficas de marca MOA Education.
- * Todo es SVG inline: cero peticiones de red, escala perfecta y hereda color.
+ *
+ * El logotipo es el archivo oficial de marca (public/moa-logo.png).
+ * Las figuras decorativas siguen siendo SVG inline: cero peticiones de red,
+ * escalan perfecto y heredan el color con clases de Tailwind.
  */
 
 /* -------------------------------------------------------------- LOGOTIPO */
+/**
+ * El isotipo oficial de MOA Education.
+ *
+ * Antes esta marca era una "m" dibujada a mano en SVG que solo se PARECIA a la
+ * del logo. Ahora se usa el archivo real de marca (public/moa-logo.png), asi
+ * que las proporciones, la curva de la onda y el grosor de los trazos son
+ * exactamente los del manual, no una aproximacion.
+ *
+ * next/image lo sirve optimizado (WebP/AVIF segun el navegador) y con las
+ * dimensiones declaradas, de modo que no hay salto de maquetacion al cargar.
+ */
 export function MoaMark({ className = 'h-9 w-9' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      <rect width="100" height="100" rx="24" className="fill-teal-500" />
-      <path
-        d="M78 4c0 24-56 20-56 46s56 22 56 46"
-        className="stroke-teal-700"
-        strokeWidth="26"
-        fill="none"
-        strokeLinecap="round"
-      />
-      {/* la "m" del logo */}
-      <path
-        d="M24 70V40c0-6 4-10 10-10s10 4 10 10v30M44 70V40c0-6 4-10 10-10s10 4 10 10v30"
-        stroke="#fff"
-        strokeWidth="11"
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <Image
+      src={moaLogo}
+      alt="MOA Education"
+      priority
+      sizes="64px"
+      className={`rounded-[22%] object-contain ${className}`}
+    />
   );
 }
 
@@ -40,7 +45,7 @@ export function MoaWordmark({ className = '' }: { className?: string }) {
 export function MoaLogo({ className = '', tone = 'dark' }: { className?: string; tone?: 'dark' | 'light' }) {
   return (
     <span className={`inline-flex items-center gap-2.5 ${tone === 'light' ? 'text-white' : 'text-teal-900'} ${className}`}>
-      <MoaMark className="h-8 w-8 shrink-0" />
+      <MoaMark className="h-9 w-9 shrink-0" />
       <span className="leading-none">
         <span className="block h-display text-lg leading-none">moa</span>
         <span className="eyebrow block leading-none opacity-70">Education</span>

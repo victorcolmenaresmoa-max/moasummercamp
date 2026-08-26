@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   },
   description: 'Reading Lab digital — Route 1, Teachers A2/B1. Read first. Think second. Ask AI third.',
   applicationName: 'MOA Reading Lab',
-  icons: { icon: '/icon.svg', apple: '/icon.svg' },
+  // El favicon y el icono de iOS los sirve Next automaticamente desde
+  // src/app/icon.png y src/app/apple-icon.png (el logo oficial de MOA).
   robots: { index: false, follow: false },
 };
 
