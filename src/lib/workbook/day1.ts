@@ -1,0 +1,157 @@
+import type { Day } from './types';
+
+export const day1: Day = {
+  day: 1,
+  slug: 'identity',
+  title: 'My identity as a MOA teacher',
+  theme: 'IDENTITY',
+  guidingQuestion: 'Who am I as a MOA teacher?',
+  schedule: '10:30 - 12:00 (90 minutes)',
+  objectives: [
+    'identify main ideas and secondary ideas in a text',
+    'guess the meaning of new words from the context',
+    'recognise examples of the Present Perfect',
+    'analyse the characteristics of an effective teacher',
+    'design reading questions and one activity for my own students',
+  ],
+  reading: {
+    title: 'The Teacher I Have Become',
+    blocks: [
+      { type: 'p', text: 'When I started teaching, I was very nervous. I wanted to be a great teacher from the first day, but I quickly discovered that teaching was more difficult than I expected.' },
+      { type: 'p', text: 'During my first year, I made many mistakes. Sometimes my lessons were not organized. Sometimes students looked confused, and sometimes they were not interested in the activities I had planned. After some classes, I felt disappointed and wondered if I was good enough to be a teacher.' },
+      { type: 'p', text: 'However, I did not give up.' },
+      { type: 'p', text: 'Instead, I decided to learn from every experience. I started asking other teachers for advice. I observed their classes and paid attention to the techniques they used. I also began reading books and articles about teaching. Little by little, I started to understand my students better.' },
+      { type: 'p', text: 'Over the years, I have taught students of different ages and levels. Every group has been different, and every group has taught me something new. I have learned that effective teaching is not about being perfect. It is about being willing to improve.' },
+      { type: 'p', text: 'I have also discovered that successful teachers develop good professional habits. For example, I prepare my lessons carefully, reflect on my classes, and look for new ideas to keep learning. When something does not work, I do not see it as a failure. Instead, I see it as an opportunity to grow.' },
+      { type: 'p', text: 'Another important lesson is that teaching is about people. Students learn better when they feel supported, respected, and motivated. For this reason, I try to create a positive classroom environment where students feel comfortable participating and making mistakes.' },
+      { type: 'p', text: 'Today, I still have challenges, and I still make mistakes sometimes. However, I am not the same teacher I was when I started. I have improved my classroom management, my lesson planning, and my ability to connect with students.' },
+      { type: 'p', text: 'Most importantly, I have developed a growth mindset. I understand that learning never stops - not for students and not for teachers. Every class is an opportunity to learn something new.' },
+      { type: 'p', text: 'Looking back, I realize that becoming a better teacher has not happened overnight. It has been a journey of reflection, practice, and continuous learning.' },
+      { type: 'quote', text: 'And that journey is not finished yet.' },
+    ],
+  },
+  sections: [
+    {
+      id: 'd1_part1',
+      title: 'PART 1 - Personal reflection and prediction',
+      minutes: 15,
+      intro: 'Answer BEFORE you read the text.',
+      fields: [
+        { type: 'textarea', key: 'd1_p1_q1', label: '1. What makes a teacher effective?', rows: 4 },
+        { type: 'textarea', key: 'd1_p1_q2', label: '2. What professional habit has helped you grow as a teacher?', rows: 4 },
+        { type: 'textarea', key: 'd1_p1_q3', label: '3. What do you think the author learned during his or her teaching journey?', rows: 4 },
+        {
+          type: 'ai_prompt',
+          key: 'd1_p1_ai',
+          prompt: 'Create a list of five professional habits that highly effective teachers usually develop. Explain each one briefly.',
+          note: 'Now compare the AI list with your own answers and complete the table below.',
+        },
+        {
+          type: 'table',
+          key: 'd1_p1_table',
+          columns: ['Habits that are similar to my ideas', 'One new idea I had not thought about'],
+          minRows: 3,
+        },
+      ],
+      checkpoint: {
+        number: 1,
+        items: ['Reflection completed before reading.', 'AI used in an appropriate way.', 'Active participation.'],
+      },
+    },
+    {
+      id: 'd1_part2',
+      title: 'PART 2 - Reading and analysis',
+      minutes: 20,
+      intro: 'Read the text and collect evidence.',
+      fields: [
+        {
+          type: 'table',
+          key: 'd1_p2_evidence',
+          label: 'Complete the table with information from the text.',
+          columns: ['Challenge', 'Lesson learned', 'Professional habit'],
+          minRows: 3,
+        },
+        {
+          type: 'table',
+          key: 'd1_p2_vocab',
+          label: 'Vocabulary challenge',
+          help: 'Choose five words you do not know. First write your own guess. Only then ask the AI.',
+          columns: ['Word from the text', 'My guess (before AI)', 'Simple explanation (after AI)'],
+          minRows: 5,
+        },
+        {
+          type: 'ai_prompt',
+          key: 'd1_p2_ai',
+          prompt: 'Explain these words using simple English suitable for an A2/B1 learner.',
+          note: 'Compare the explanations with your own guesses. Were you close?',
+        },
+      ],
+      checkpoint: {
+        number: 2,
+        items: ['Table completed with information from the text.', 'Guesses written BEFORE using AI.', 'General understanding of the text.'],
+      },
+    },
+    {
+      id: 'd1_part3',
+      title: 'PART 3 - Teacher growth analysis',
+      minutes: 20,
+      intro: 'Find the evidence in the text.',
+      fields: [
+        { type: 'textarea', key: 'd1_p3_a', label: 'A. Three examples of Present Perfect in the text', rows: 4 },
+        { type: 'textarea', key: 'd1_p3_b', label: 'B. Three characteristics of an effective teacher', rows: 4 },
+        { type: 'textarea', key: 'd1_p3_c', label: 'C. Two ideas from the text that we could apply at MOA', rows: 4 },
+        {
+          type: 'ai_prompt',
+          key: 'd1_p3_ai',
+          prompt: 'Which teacher qualities mentioned in this text are most closely related to student-centered learning? Explain why.',
+          note: 'Read the answer. Do you agree or disagree? Justify your opinion with evidence from the text.',
+        },
+        { type: 'textarea', key: 'd1_p3_agree', label: 'I agree / I disagree with the AI answer because...', rows: 5 },
+      ],
+      checkpoint: {
+        number: 3,
+        items: ['Evidence found in the text.', 'Personal reflection, not a copy of the AI answer.', 'Ideas connected with MOA.'],
+      },
+    },
+    {
+      id: 'd1_part4',
+      title: 'PART 4 - MOA teacher design challenge',
+      minutes: 25,
+      intro: 'Final product. Now you are the teacher. Design a small reading sequence for your own students, based on this text.',
+      fields: [
+        { type: 'textarea', key: 'd1_p4_pre', label: 'Pre-reading questions (2)', rows: 3 },
+        { type: 'textarea', key: 'd1_p4_while', label: 'While-reading questions (3)', rows: 4 },
+        { type: 'textarea', key: 'd1_p4_post', label: 'Post-reading activity (1)', rows: 3 },
+        {
+          type: 'ai_prompt',
+          key: 'd1_p4_ai',
+          prompt: 'Suggest three post-reading activities for A2/B1 English learners based on this text.',
+          note: 'Analyse the three proposals, select one and improve or adapt it for your students.',
+        },
+        {
+          type: 'table',
+          key: 'd1_p4_table',
+          columns: ['The activity I selected', 'How I adapted it and why'],
+          minRows: 1,
+        },
+      ],
+    },
+    {
+      id: 'd1_part5',
+      title: 'PART 5 - Final professional reflection',
+      minutes: 10,
+      fields: [
+        { type: 'textarea', key: 'd1_p5_have', label: 'Three habits I already have', rows: 3 },
+        { type: 'textarea', key: 'd1_p5_develop', label: 'Two habits I want to develop', rows: 3 },
+        { type: 'textarea', key: 'd1_p5_action', label: 'One action I will implement this term', rows: 3 },
+      ],
+    },
+  ],
+  finalChecklist: [
+    'Part 1 - Initial predictions.',
+    'Part 2 - Text analysis table and vocabulary.',
+    'Part 3 - Teacher growth analysis.',
+    'Part 4 - My reading questions and activity.',
+    'Part 5 - Final professional reflection.',
+  ],
+};
