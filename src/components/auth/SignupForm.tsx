@@ -5,68 +5,73 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { FormError } from '@/components/auth/FormError';
 
-const CAMP_CODE = process.env.NEXT_PUBLIC_CAMP_CODE ?? 'MOA2026';
-
-export function SignupForm() {
+export function SignupForm({ completingExistingSession = false }: { completingExistingSession?: boolean }) {
   const router = useRouter();
+
   const [form, setForm] = useState({
-    fullName: '',
     campus: 'merida',
     workbookRoute: 'a2_b1',
-    email: '',
-    password: '',
     code: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setLoading(true);
     setError(null);
 
-    if (form.code.trim().toUpperCase() !== CAMP_CODE.toUpperCase()) {
-      setError('The camp code is incorrect. Ask your moderator for the correct code.');
-      return;
-    }
+    try {
+      const response = await fetch('/api/auth/registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; completed?: boolean; error?: string }
+        | null;
 
-    setLoading(true);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email: form.email.trim(),
-      password: form.password,
-      options: {
-        data: {
-          full_name: form.fullName.trim(),
-          campus: form.campus,
-          workbook_route: form.workbookRoute,
-        },
-      },
-    });
+      if (!response.ok || !payload?.ok) {
+        setError(payload?.error ?? 'We could not prepare your registration. Please try again.');
+        setLoading(false);
+        return;
+      }
 
-    if (error) {
-      setError(error.message);
+      // A user who arrived here after trying Google from /login already has a
+      // valid session. The API completed the profile, so no second OAuth trip.
+      if (payload.completed) {
+        router.replace('/lab');
+        router.refresh();
+        return;
+      }
+
+      const callback = new URL('/auth/callback', window.location.origin);
+      callback.searchParams.set('mode', 'signup');
+
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: callback.toString() },
+      });
+
+      if (error) {
+        setError(
+          error.message.toLowerCase().includes('provider')
+            ? 'Google registration is not configured yet. Ask the administrator to enable Google in Supabase Auth.'
+            : error.message,
+        );
+        setLoading(false);
+      }
+    } catch {
+      setError('The connection failed before Google opened. Please check your internet connection and try again.');
       setLoading(false);
-      return;
     }
-    router.replace('/lab');
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
-      <div>
-        <label className="label" htmlFor="name">My name</label>
-        <input
-          id="name"
-          className="input mt-1.5"
-          autoComplete="name"
-          required
-          value={form.fullName}
-          onChange={(e) => set('fullName', e.target.value)}
-        />
-      </div>
-
       <div>
         <label className="label">My campus</label>
         <div className="mt-1.5 grid grid-cols-2 gap-2">
@@ -111,37 +116,12 @@ export function SignupForm() {
               }`}
             >
               <span className="block text-sm font-extrabold">{r.l}</span>
-              <span className={`block text-xs font-semibold ${form.workbookRoute === r.v ? 'text-white/70' : 'text-ink/40'}`}>{r.sub}</span>
+              <span className={`block text-xs font-semibold ${form.workbookRoute === r.v ? 'text-white/70' : 'text-ink/40'}`}>
+                {r.sub}
+              </span>
             </button>
           ))}
         </div>
-      </div>
-
-      <div>
-        <label className="label" htmlFor="email">Email</label>
-        <input
-          id="email"
-          className="input mt-1.5"
-          type="email"
-          autoComplete="email"
-          required
-          value={form.email}
-          onChange={(e) => set('email', e.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="label" htmlFor="pw">Password <span className="font-normal text-ink/45">(minimum 6 characters)</span></label>
-        <input
-          id="pw"
-          className="input mt-1.5"
-          type="password"
-          autoComplete="new-password"
-          minLength={6}
-          required
-          value={form.password}
-          onChange={(e) => set('password', e.target.value)}
-        />
       </div>
 
       <div>
@@ -150,6 +130,7 @@ export function SignupForm() {
           id="code"
           className="input mt-1.5 font-bold uppercase tracking-widest"
           required
+          autoComplete="off"
           placeholder="MOA2026"
           value={form.code}
           onChange={(e) => set('code', e.target.value)}
@@ -159,8 +140,24 @@ export function SignupForm() {
       <FormError>{error}</FormError>
 
       <button className="btn-accent w-full py-3 text-base shadow-pop" disabled={loading}>
-        {loading ? 'Creating…' : 'Start the camp'}
+        <span
+          aria-hidden="true"
+          className="grid h-6 w-6 place-items-center rounded-full border border-plum-500/10 bg-white text-sm font-extrabold text-ink"
+        >
+          G
+        </span>
+        {loading
+          ? completingExistingSession
+            ? 'Finishing registration…'
+            : 'Opening Google…'
+          : completingExistingSession
+            ? 'Finish registration'
+            : 'Continue with Google'}
       </button>
+
+      <p className="text-center text-xs font-semibold leading-relaxed text-ink/45">
+        Your name and email come directly from your Google account. You do not need to create a password for this app.
+      </p>
     </form>
   );
 }

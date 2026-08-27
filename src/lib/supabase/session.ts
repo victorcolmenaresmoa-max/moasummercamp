@@ -17,6 +17,7 @@ export const requireProfile = cache(async (): Promise<Profile> => {
     .single();
 
   if (!profile) redirect('/login?error=no-profile');
+  if (profile.role === 'participant' && !profile.campus) redirect('/signup?complete=1');
   return profile as Profile;
 });
 

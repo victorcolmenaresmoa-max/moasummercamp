@@ -1,74 +1,61 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { FormError } from '@/components/auth/FormError';
 
 export function LoginForm({ nextPath }: { nextPath?: string }) {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function signInWithGoogle() {
     setLoading(true);
     setError(null);
 
+    const callback = new URL('/auth/callback', window.location.origin);
+    callback.searchParams.set('mode', 'login');
+    if (nextPath?.startsWith('/')) callback.searchParams.set('next', nextPath);
+
     const supabase = createClient();
-    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: callback.toString() },
+    });
 
+    // Normally the browser leaves this page immediately. If Supabase rejects
+    // the request (for example Google is not enabled), show a useful error.
     if (error) {
-      setError(error.message === 'Invalid login credentials' ? 'Incorrect email or password.' : error.message);
+      setError(
+        error.message.toLowerCase().includes('provider')
+          ? 'Google sign-in is not configured yet. Ask the administrator to enable Google in Supabase Auth.'
+          : error.message,
+      );
       setLoading(false);
-      return;
     }
-
-    // Si middleware nos devolvio desde una ruta protegida, ese destino ya es
-    // suficiente y evitamos una consulta adicional del rol.
-    if (nextPath) {
-      router.replace(nextPath);
-      return;
-    }
-
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
-    router.replace(!profile || profile.role === 'participant' ? '/lab' : '/moderator');
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5">
-      <div>
-        <label className="label" htmlFor="email">Email</label>
-        <input
-          id="email"
-          className="input mt-1.5"
-          type="email"
-          autoComplete="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
-      <div>
-        <label className="label" htmlFor="password">Password</label>
-        <input
-          id="password"
-          className="input mt-1.5"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </div>
+    <div className="space-y-5">
+      <button
+        type="button"
+        className="btn-ghost w-full border-teal-200 py-3 text-base shadow-sm"
+        onClick={signInWithGoogle}
+        disabled={loading}
+      >
+        <span
+          aria-hidden="true"
+          className="grid h-6 w-6 place-items-center rounded-full border border-ink/10 bg-white text-sm font-extrabold text-ink"
+        >
+          G
+        </span>
+        {loading ? 'Opening Google…' : 'Continue with Google'}
+      </button>
 
       <FormError>{error}</FormError>
 
-      <button className="btn-primary w-full py-3 text-base" disabled={loading}>
-        {loading ? 'Signing in…' : 'Sign in'}
-      </button>
-    </form>
+      <p className="text-center text-xs font-semibold leading-relaxed text-ink/45">
+        No password to remember. Google verifies your account and MOA keeps your workbook session in Supabase.
+      </p>
+    </div>
   );
 }

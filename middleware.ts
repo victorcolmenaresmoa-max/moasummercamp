@@ -24,8 +24,8 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isProtected = path.startsWith('/lab') || path.startsWith('/moderator');
 
-  // getClaims() verifica la sesion sin forzar una llamada al Auth server en
-  // cada navegacion cuando el proyecto usa JWT asimetrico (config moderna).
+  // getClaims() verifies the existing JWT without forcing a full Auth-server
+  // user lookup on every navigation.
   const { data } = await supabase.auth.getClaims();
   const userId = typeof data?.claims?.sub === 'string' ? data.claims.sub : null;
 
@@ -36,7 +36,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (userId && (path === '/login' || path === '/signup')) {
+  if (userId && path === '/login') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/lab';
+    url.search = '';
+    return NextResponse.redirect(url);
+  }
+
+  // /signup?complete=1 is intentionally available to an authenticated Google
+  // user whose profile still needs campus/route + camp-code validation.
+  if (userId && path === '/signup' && request.nextUrl.searchParams.get('complete') !== '1') {
     const url = request.nextUrl.clone();
     url.pathname = '/lab';
     url.search = '';
