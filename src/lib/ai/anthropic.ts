@@ -66,6 +66,6 @@ export function parseJson<T>(text: string): T {
   const cleaned = text.replace(/^```(?:json)?/gm, '').replace(/```$/gm, '').trim();
   const start = cleaned.indexOf('{');
   const end = cleaned.lastIndexOf('}');
-  if (start === -1 || end === -1) throw new Error('La IA no devolvió JSON');
+  if (start === -1 || end === -1) throw new Error('La IA no devolvió JSON | Intenta nuevamente');
   return JSON.parse(cleaned.slice(start, end + 1)) as T;
 }
