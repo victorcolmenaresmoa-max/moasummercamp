@@ -33,7 +33,7 @@ export function DayLocked({ day }: { day: Day }) {
             </p>
             <h1 className="h-display mt-2 text-3xl">This lab is not open yet</h1>
             <p className="mt-4 leading-relaxed text-white/75">
-              Your moderator will activate it when this day's session begins. This keeps the camp
+              Your moderator will activate it when this day&apos;s session begins. This keeps the camp
               in the classroom, with your group, and prevents anyone from arriving with answers prepared at home.
             </p>
 

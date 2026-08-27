@@ -89,7 +89,7 @@ export default async function Home() {
           <Burst className="mt-0.5 h-7 w-7 shrink-0 text-sun-500" />
           <p className="text-sm leading-relaxed text-ink/70">
             <strong className="text-teal-800">Each day opens during its session.</strong> Your moderator activates
-            the day's lab when class begins. You cannot work ahead from home:
+            the day&apos;s lab when class begins. You cannot work ahead from home:
             the camp happens here, with your group.
           </p>
         </div>

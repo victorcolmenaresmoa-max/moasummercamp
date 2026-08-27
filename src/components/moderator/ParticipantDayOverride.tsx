@@ -68,7 +68,7 @@ export function ParticipantDayOverride({
   return (
     <section className="card p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="h-display text-lg text-teal-900">This participant's day access</h2>
+        <h2 className="h-display text-lg text-teal-900">This participant&apos;s day access</h2>
         <span className="text-xs font-semibold text-ink/45">
           Individual exceptions override the general rule
         </span>
