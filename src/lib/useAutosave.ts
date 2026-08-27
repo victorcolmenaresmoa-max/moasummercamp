@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { queueAutosave } from '@/lib/autosaveManager';
 import type { SaveStatus } from '@/components/ui/SaveState';
 
 type Args = {
@@ -15,84 +15,66 @@ type Args = {
 };
 
 /**
- * Autoguardado con debounce contra public.responses (upsert por user_id+field_key).
- *
- * Mejoras respecto a la version anterior:
- *  - Cliente Supabase compartido (antes se creaba uno por campo).
- *  - No escribe si el valor no cambio: menos trafico y menos eventos realtime.
- *  - Guarda al ocultar la pestana con `pagehide`/`visibilitychange`
- *    (`beforeunload` no dispara de forma fiable en moviles).
- *  - Si el dia esta cerrado, la RLS rechaza la escritura (codigo 42501) y se
- *    muestra "Dia cerrado" en vez de un error generico.
+ * Autosave ligero: cada campo conserva su estado local, pero todas las
+ * escrituras comparten una sola cola/batch por pestana.
  */
-export function useAutosave({ userId, day, sectionId, fieldKey, fieldLabel, initial, delay = 800 }: Args) {
+export function useAutosave({ userId, day, sectionId, fieldKey, fieldLabel, initial, delay = 850 }: Args) {
   const [value, setValue] = useState<any>(initial ?? {});
   const [status, setStatus] = useState<SaveStatus>('idle');
 
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const clearStatus = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSaved = useRef(JSON.stringify(initial ?? {}));
   const latest = useRef(value);
+  const mounted = useRef(true);
+  const clearStatus = useRef<ReturnType<typeof setTimeout> | null>(null);
   latest.current = value;
 
-  const flush = useCallback(
-    async (v: any) => {
-      const serialized = JSON.stringify(v ?? {});
-      if (serialized === lastSaved.current) return; // nada que hacer
-
-      setStatus('saving');
-      const { error } = await createClient()
-        .from('responses')
-        .upsert(
-          { user_id: userId, day, section_id: sectionId, field_key: fieldKey, field_label: fieldLabel, value: v },
-          { onConflict: 'user_id,field_key' },
-        );
-
-      if (error) {
-        // 42501 = insufficient_privilege -> la politica RLS bloqueo el dia.
-        setStatus(error.code === '42501' ? 'locked' : 'error');
-        return;
-      }
-
-      lastSaved.current = serialized;
-      setStatus('saved');
-      if (clearStatus.current) clearTimeout(clearStatus.current);
-      clearStatus.current = setTimeout(() => setStatus('idle'), 1800);
-    },
-    [userId, day, sectionId, fieldKey, fieldLabel],
-  );
-
-  // Debounce del guardado
   useEffect(() => {
-    if (JSON.stringify(value ?? {}) === lastSaved.current) return;
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => flush(value), delay);
+    mounted.current = true;
     return () => {
-      if (timer.current) clearTimeout(timer.current);
-    };
-  }, [value, delay, flush]);
-
-  // Guardado inmediato al salir / cambiar de app
-  useEffect(() => {
-    const save = () => {
-      if (timer.current) {
-        clearTimeout(timer.current);
-        timer.current = null;
-        void flush(latest.current);
-      }
-    };
-    const onVisibility = () => {
-      if (document.visibilityState === 'hidden') save();
-    };
-
-    window.addEventListener('pagehide', save);
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => {
-      window.removeEventListener('pagehide', save);
-      document.removeEventListener('visibilitychange', onVisibility);
+      mounted.current = false;
       if (clearStatus.current) clearTimeout(clearStatus.current);
     };
-  }, [flush]);
+  }, []);
+
+  const onResult = useCallback((nextStatus: SaveStatus, serialized: string) => {
+    if (nextStatus === 'saved') lastSaved.current = serialized;
+    if (!mounted.current) return;
+
+    // Si el usuario ya escribio algo nuevo mientras se guardaba el valor
+    // anterior, no mostramos un "Saved" enganoso para el valor nuevo.
+    const latestSerialized = JSON.stringify(latest.current ?? {});
+    if (nextStatus === 'saved' && latestSerialized !== serialized) return;
+
+    setStatus(nextStatus);
+    if (nextStatus === 'saved') {
+      if (clearStatus.current) clearTimeout(clearStatus.current);
+      clearStatus.current = setTimeout(() => {
+        if (mounted.current) setStatus('idle');
+      }, 1500);
+    }
+  }, []);
+
+  useEffect(() => {
+    const serialized = JSON.stringify(value ?? {});
+    if (serialized === lastSaved.current) return;
+
+    queueAutosave(
+      `${userId}:${fieldKey}`,
+      {
+        serialized,
+        record: {
+          user_id: userId,
+          day,
+          section_id: sectionId,
+          field_key: fieldKey,
+          field_label: fieldLabel,
+          value,
+        },
+        onResult,
+      },
+      delay,
+    );
+  }, [value, delay, userId, day, sectionId, fieldKey, fieldLabel, onResult]);
 
   return { value, setValue, status };
 }

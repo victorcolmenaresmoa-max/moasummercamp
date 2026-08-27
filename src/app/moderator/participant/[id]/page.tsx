@@ -12,6 +12,7 @@ import {
 import { AnswerValue } from '@/components/moderator/AnswerValue';
 import { CheckpointApproval } from '@/components/moderator/CheckpointApproval';
 import { ReportPanel } from '@/components/moderator/ReportPanel';
+import type { AiReportDisplay } from '@/components/moderator/ReportPanel';
 import { ModeratorRealtime } from '@/components/moderator/ModeratorRealtime';
 import { ParticipantDayOverride } from '@/components/moderator/ParticipantDayOverride';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -20,11 +21,9 @@ import { ArrowLeftIcon } from '@/components/ui/Icons';
 import { hasContent, pct, timeAgo } from '@/lib/utils';
 import type {
   AiInteractionRow,
-  AiReportRow,
   CheckpointRow,
   DayAccessRow,
   ParticipantDayAccessRow,
-  ResponseRow,
 } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
@@ -57,17 +56,27 @@ export default async function ParticipantDetail({
     { data: access },
     { data: overrides },
   ] = await Promise.all([
-    supabase.from('responses').select('*').eq('user_id', params.id),
+    supabase.from('responses').select('field_key, value, day, updated_at').eq('user_id', params.id),
     supabase.from('checkpoints').select('*').eq('user_id', params.id),
-    supabase.from('ai_reports').select('*').eq('user_id', params.id).order('generated_at', { ascending: false }).limit(1),
-    supabase.from('ai_interactions').select('*').eq('user_id', params.id).order('created_at', { ascending: false }).limit(10),
+    supabase
+      .from('ai_reports')
+      .select('id, user_id, model, summary, strengths, growth_areas, evidence_use, pedagogical_depth, reflection_depth, next_step, moderator_notes, generated_at')
+      .eq('user_id', params.id)
+      .order('generated_at', { ascending: false })
+      .limit(1),
+    supabase
+      .from('ai_interactions')
+      .select('id, day, prompt, created_at')
+      .eq('user_id', params.id)
+      .order('created_at', { ascending: false })
+      .limit(10),
     supabase.from('day_access').select('*'),
     supabase.from('participant_day_access').select('*').eq('user_id', params.id),
   ]);
 
-  const answers = new Map((responses ?? []).map((r: ResponseRow) => [r.field_key, r.value]));
+  const answers = new Map((responses ?? []).map((r) => [r.field_key, r.value]));
   const cps = new Map((checkpoints ?? []).map((c: CheckpointRow) => [`${c.day}-${c.checkpoint_number}`, c]));
-  const report = ((reports ?? [])[0] ?? null) as AiReportRow | null;
+  const report = ((reports ?? [])[0] ?? null) as AiReportDisplay | null;
   const activeDay = Number(searchParams.day ?? 1) || 1;
   const day = workbook.find((d) => d.day === activeDay) ?? workbook[0];
 
@@ -80,9 +89,19 @@ export default async function ParticipantDetail({
     }),
   );
 
-  const answeredInDay = (d: number) => (responses ?? []).filter((r) => r.day === d && hasContent(r.value)).length;
-  const lastActivity = (responses ?? []).map((r) => r.updated_at).sort().at(-1);
-  const pendingReview = (checkpoints ?? []).filter((c) => c.status === 'pending' && c.submitted_at).length;
+  // Una sola pasada: evita volver a recorrer todas las respuestas por cada dia
+  // y evita ordenar solo para encontrar la actividad mas reciente.
+  const answeredByDay: Record<number, number> = {};
+  let lastActivity: string | undefined;
+  for (const response of responses ?? []) {
+    if (hasContent(response.value)) answeredByDay[response.day] = (answeredByDay[response.day] ?? 0) + 1;
+    if (!lastActivity || response.updated_at > lastActivity) lastActivity = response.updated_at;
+  }
+  const answeredInDay = (d: number) => answeredByDay[d] ?? 0;
+  const pendingReview = (checkpoints ?? []).reduce(
+    (count, c) => count + (c.status === 'pending' && c.submitted_at ? 1 : 0),
+    0,
+  );
 
   return (
     <div className="space-y-6">
@@ -90,7 +109,7 @@ export default async function ParticipantDetail({
 
       <Link
         href="/moderator"
-        prefetch
+        prefetch={false}
         className="inline-flex items-center gap-2 text-sm font-bold text-teal-600 transition hover:text-teal-800"
       >
         <ArrowLeftIcon className="h-4 w-4" />
@@ -140,6 +159,7 @@ export default async function ParticipantDetail({
           <Link
             key={d.day}
             href={`/moderator/participant/${params.id}?day=${d.day}`}
+            prefetch={false}
             scroll={false}
             className={`${d.day === activeDay ? 'btn-primary' : 'btn-ghost'} btn-sm shrink-0`}
           >
@@ -185,7 +205,7 @@ export default async function ParticipantDetail({
           <p className="mt-2 text-sm font-semibold text-ink/50">The participant did not use the built-in assistant.</p>
         ) : (
           <ul className="mt-4 space-y-2.5">
-            {(interactions as AiInteractionRow[]).map((i) => (
+            {(interactions as Pick<AiInteractionRow, 'id' | 'day' | 'prompt' | 'created_at'>[]).map((i) => (
               <li key={i.id} className="rounded-2xl bg-teal-50/70 p-3.5">
                 <p className="eyebrow text-teal-600">
                   Day {i.day ?? '?'} · {timeAgo(i.created_at)}

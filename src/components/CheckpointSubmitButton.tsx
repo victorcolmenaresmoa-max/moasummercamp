@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { flushAutosaves } from '@/lib/autosaveManager';
 
 export function CheckpointSubmitButton({
   day,
@@ -16,24 +17,42 @@ export function CheckpointSubmitButton({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   async function submit() {
     setLoading(true);
     setMessage(null);
     setFailed(false);
     try {
-      const response = await fetch('/api/checkpoints/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ day, checkpointNumber }),
-      });
+      // Si quedaba una respuesta en la cola de autosave, se envia en paralelo
+      // con el checkpoint: no agrega otra espera secuencial y evita refrescar
+      // la pagina con una respuesta todavia pendiente.
+      const [response] = await Promise.all([
+        fetch('/api/checkpoints/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ day, checkpointNumber }),
+        }),
+        flushAutosaves(),
+      ]);
       const json = await response.json().catch(() => null);
       if (!response.ok) {
         setFailed(true);
         setMessage(json?.error ?? 'The checkpoint could not be submitted.');
         return;
       }
-      setMessage(json?.warning ?? 'Checkpoint submitted for review.');
+
+      // El usuario ya termino: Telegram se dispara aparte y no bloquea el boton.
+      setSubmitted(true);
+      setMessage('Checkpoint submitted for review.');
+      void fetch('/api/checkpoints/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ day, checkpointNumber }),
+        keepalive: true,
+      }).catch(() => undefined);
+
+      // Refresca los datos visuales, pero ya fuera del tiempo de espera percibido.
       router.refresh();
     } catch {
       setFailed(true);
@@ -45,9 +64,11 @@ export function CheckpointSubmitButton({
 
   return (
     <div className="mt-4">
-      <button type="button" className="btn-primary btn-sm" disabled={loading} onClick={submit}>
-        {loading ? 'Sending…' : resubmit ? 'Resubmit for review' : 'I reached this checkpoint · Submit for review'}
-      </button>
+      {!submitted && (
+        <button type="button" className="btn-primary btn-sm" disabled={loading} onClick={submit}>
+          {loading ? 'Sending…' : resubmit ? 'Resubmit for review' : 'I reached this checkpoint · Submit for review'}
+        </button>
+      )}
       {message && (
         <p className={`mt-2 text-xs font-semibold ${failed ? 'text-coral-600' : 'text-teal-700'}`}>{message}</p>
       )}

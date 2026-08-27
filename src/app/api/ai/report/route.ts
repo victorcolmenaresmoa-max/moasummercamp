@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getVerifiedUserId } from '@/lib/supabase/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { callLLMJson, LlmError, MODEL } from '@/lib/ai/llm';
 import { REPORT_SCHEMA, normalizeReport, type ReportJson } from '@/lib/ai/schema';
@@ -18,17 +19,17 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(req: Request) {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
+  const userId = await getVerifiedUserId(supabase);
+  if (!userId) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
 
-  const { data: me } = await supabase.from('profiles').select('id, role').eq('id', user.id).single();
+  const { data: me } = await supabase.from('profiles').select('id, role').eq('id', userId).single();
   if (!me) return NextResponse.json({ error: 'Profile not found.' }, { status: 403 });
 
   const body = await req.json().catch(() => ({}) as any);
-  const targetId: string = body?.userId ?? user.id;
+  const targetId: string = body?.userId ?? userId;
 
   const isStaff = me.role === 'moderator' || me.role === 'admin';
-  if (!isStaff && targetId !== user.id) {
+  if (!isStaff && targetId !== userId) {
     return NextResponse.json({ error: 'You do not have permission to evaluate another participant.' }, { status: 403 });
   }
 
@@ -94,7 +95,7 @@ export async function POST(req: Request) {
       .from('ai_reports')
       .insert({
         user_id: targetId,
-        requested_by: user.id,
+        requested_by: userId,
         model: MODEL,
         summary: parsed.summary,
         strengths: parsed.strengths,

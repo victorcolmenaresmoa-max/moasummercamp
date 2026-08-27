@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getVerifiedUserId } from '@/lib/supabase/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 export const runtime = 'nodejs';
@@ -33,12 +34,10 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(req: Request) {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
+  const userId = await getVerifiedUserId(supabase);
+  if (!userId) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
 
-  const { data: me } = await supabase.from('profiles').select('id, role').eq('id', user.id).single();
+  const { data: me } = await supabase.from('profiles').select('id, role').eq('id', userId).single();
   if (!me || me.role !== 'admin') {
     return NextResponse.json(
       { error: 'Only an administrator can delete accounts.' },

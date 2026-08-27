@@ -14,20 +14,17 @@ type TableSub = {
 type Options = {
   channel: string;
   tables: TableSub[];
-  /** ms de agrupacion: 25 docentes escribiendo a la vez no deben dar 25 refrescos. */
+  /** ms de agrupacion: evita refrescos repetidos por una misma rafaga. */
   debounce?: number;
   onChange?: (payload: any) => void;
 };
 
 /**
- * Suscripcion realtime con:
- *  - un unico canal por pantalla (no uno por tabla),
- *  - debounce para agrupar rafagas de eventos,
- *  - startTransition para que el refresco no bloquee lo que el usuario escribe,
- *  - pausa cuando la pestana esta en segundo plano (ahorra bateria y ancho de banda),
- *  - resincronizacion al volver a la pestana (por si perdio eventos).
+ * Un solo canal Realtime por pantalla. La conexion se difiere hasta que el
+ * navegador queda libre para no competir con hidratacion, inputs y primer
+ * render del Lab.
  */
-export function useRealtime({ channel, tables, debounce = 400, onChange }: Options) {
+export function useRealtime({ channel, tables, debounce = 450, onChange }: Options) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -35,37 +32,54 @@ export function useRealtime({ channel, tables, debounce = 400, onChange }: Optio
   const cbRef = useRef(onChange);
   cbRef.current = onChange;
 
-  // Serializamos la config para no re-suscribir en cada render.
   const key = JSON.stringify(tables);
 
   useEffect(() => {
     const subs: TableSub[] = JSON.parse(key);
     const supabase = createClient();
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+    let disposed = false;
+    let idleId: number | null = null;
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
     const refresh = () => startTransition(() => router.refresh());
 
     const schedule = (payload: any) => {
       cbRef.current?.(payload);
       if (document.visibilityState === 'hidden') {
-        pending.current = true; // se aplicara al volver
+        pending.current = true;
         return;
       }
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(refresh, debounce);
     };
 
-    let ch = supabase.channel(channel, { config: { broadcast: { self: false } } });
-    for (const s of subs) {
-      ch = ch.on(
-        'postgres_changes' as any,
-        { event: s.event ?? '*', schema: 'public', table: s.table, ...(s.filter ? { filter: s.filter } : {}) },
-        schedule,
-      );
+    const connect = () => {
+      if (disposed || ch) return;
+      let next = supabase.channel(channel, { config: { broadcast: { self: false } } });
+      for (const s of subs) {
+        next = next.on(
+          'postgres_changes' as any,
+          { event: s.event ?? '*', schema: 'public', table: s.table, ...(s.filter ? { filter: s.filter } : {}) },
+          schedule,
+        );
+      }
+      ch = next;
+      ch.subscribe();
+    };
+
+    // Realtime es importante, pero no necesita bloquear la interactividad del
+    // primer segundo. requestIdleCallback tiene timeout para no dejarlo tarde.
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      idleId = (window as any).requestIdleCallback(connect, { timeout: 700 });
+    } else {
+      fallbackTimer = setTimeout(connect, 180);
     }
-    ch.subscribe();
 
     const onVisible = () => {
-      if (document.visibilityState === 'visible' && pending.current) {
+      if (document.visibilityState !== 'visible') return;
+      connect();
+      if (pending.current) {
         pending.current = false;
         refresh();
       }
@@ -73,9 +87,14 @@ export function useRealtime({ channel, tables, debounce = 400, onChange }: Optio
     document.addEventListener('visibilitychange', onVisible);
 
     return () => {
+      disposed = true;
       if (timer.current) clearTimeout(timer.current);
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+      if (idleId !== null && typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+        (window as any).cancelIdleCallback(idleId);
+      }
       document.removeEventListener('visibilitychange', onVisible);
-      void supabase.removeChannel(ch);
+      if (ch) void supabase.removeChannel(ch);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channel, key, debounce, router]);

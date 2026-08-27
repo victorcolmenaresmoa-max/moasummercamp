@@ -21,20 +21,22 @@ export async function middleware(request: NextRequest) {
     },
   );
 
-  // Only protected/auth pages pass through middleware. API routes authenticate
-  // themselves, so they avoid a second unnecessary auth network request.
-  const { data: { user } } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
   const isProtected = path.startsWith('/lab') || path.startsWith('/moderator');
 
-  if (isProtected && !user) {
+  // getClaims() verifica la sesion sin forzar una llamada al Auth server en
+  // cada navegacion cuando el proyecto usa JWT asimetrico (config moderna).
+  const { data } = await supabase.auth.getClaims();
+  const userId = typeof data?.claims?.sub === 'string' ? data.claims.sub : null;
+
+  if (isProtected && !userId) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('next', path);
     return NextResponse.redirect(url);
   }
 
-  if (user && (path === '/login' || path === '/signup')) {
+  if (userId && (path === '/login' || path === '/signup')) {
     const url = request.nextUrl.clone();
     url.pathname = '/lab';
     url.search = '';

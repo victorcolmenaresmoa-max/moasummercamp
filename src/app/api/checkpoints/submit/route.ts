@@ -1,16 +1,23 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getVerifiedUserId } from '@/lib/supabase/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { CAMPUS_LABELS, getDay, normalizeWorkbookRoute, WORKBOOK_ROUTE_LABELS } from '@/lib/workbook';
-import { escapeTelegramHtml, sendTelegramMessage } from '@/lib/telegram';
+import { getDay, normalizeWorkbookRoute } from '@/lib/workbook';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+/**
+ * Guarda el checkpoint y responde inmediatamente.
+ *
+ * La notificacion de Telegram se hace en una segunda llamada no bloqueante
+ * desde el cliente. Antes el usuario esperaba hasta 8 segundos por Telegram
+ * aun cuando el checkpoint ya estaba guardado correctamente.
+ */
 export async function POST(req: Request) {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
+  const userId = await getVerifiedUserId(supabase);
+  if (!userId) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
   const dayNumber = Number(body?.day);
@@ -24,11 +31,23 @@ export async function POST(req: Request) {
   }
 
   const admin = createAdminClient();
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('id, full_name, email, campus, role, workbook_route')
-    .eq('id', user.id)
-    .single();
+
+  // Estas dos lecturas no dependen entre si: hacerlas en paralelo elimina una
+  // vuelta completa a Supabase del camino critico del boton.
+  const [{ data: profile }, { data: existing }] = await Promise.all([
+    admin
+      .from('profiles')
+      .select('id, role, workbook_route')
+      .eq('id', userId)
+      .single(),
+    admin
+      .from('checkpoints')
+      .select('id, status, items_checked, moderator_id, moderator_initials, comments, submission_count')
+      .eq('user_id', userId)
+      .eq('day', dayNumber)
+      .eq('checkpoint_number', checkpointNumber)
+      .maybeSingle(),
+  ]);
 
   if (!profile || profile.role !== 'participant') {
     return NextResponse.json({ error: 'Only participants can submit checkpoints.' }, { status: 403 });
@@ -41,14 +60,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'This checkpoint does not belong to your workbook.' }, { status: 400 });
   }
 
-  const { data: existing } = await admin
-    .from('checkpoints')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('day', dayNumber)
-    .eq('checkpoint_number', checkpointNumber)
-    .maybeSingle();
-
   if (existing?.status === 'approved') {
     return NextResponse.json({ error: 'This checkpoint has already been approved.' }, { status: 409 });
   }
@@ -59,7 +70,7 @@ export async function POST(req: Request) {
     .from('checkpoints')
     .upsert(
       {
-        user_id: user.id,
+        user_id: userId,
         day: dayNumber,
         checkpoint_number: checkpointNumber,
         status: 'pending',
@@ -74,60 +85,12 @@ export async function POST(req: Request) {
       },
       { onConflict: 'user_id,day,checkpoint_number' },
     )
-    .select()
+    .select('id, day, checkpoint_number, status, submitted_at, submission_count')
     .single();
 
   if (saveError || !saved) {
     return NextResponse.json({ error: saveError?.message ?? 'The checkpoint could not be saved.' }, { status: 500 });
   }
 
-  const link = `${new URL(req.url).origin}/moderator/participant/${user.id}?day=${dayNumber}#checkpoint-${checkpointNumber}`;
-  const routeLabel = WORKBOOK_ROUTE_LABELS[route];
-  const campus = profile.campus ? CAMPUS_LABELS[profile.campus] : 'No campus';
-  const text = [
-    '🔔 <b>Checkpoint ready for review</b>',
-    '',
-    `<b>Participant:</b> ${escapeTelegramHtml(profile.full_name)}`,
-    `<b>Route:</b> ${escapeTelegramHtml(routeLabel)}`,
-    `<b>Campus:</b> ${escapeTelegramHtml(campus)}`,
-    `<b>Day:</b> ${dayNumber} — ${escapeTelegramHtml(day.title)}`,
-    `<b>Checkpoint:</b> ${checkpointNumber}`,
-    nextCount > 1 ? `<b>Submission:</b> #${nextCount}` : '',
-  ].filter(Boolean).join('\n');
-
-  try {
-    const telegram = await sendTelegramMessage({
-      text,
-      buttonText: 'Open checkpoint',
-      buttonUrl: link,
-    });
-
-    if (!telegram.configured) {
-      return NextResponse.json({
-        checkpoint: saved,
-        warning: 'Checkpoint saved. Telegram notifications are not configured yet.',
-      });
-    }
-
-    if (telegram.failed > 0) {
-      console.error('[checkpoint-telegram]', telegram.errors);
-      return NextResponse.json({
-        checkpoint: saved,
-        warning: `Checkpoint saved. Telegram reached ${telegram.sent} chat(s), but ${telegram.failed} delivery attempt(s) failed.`,
-      });
-    }
-
-    await admin
-      .from('checkpoints')
-      .update({ notification_sent_at: new Date().toISOString() })
-      .eq('id', saved.id);
-
-    return NextResponse.json({ checkpoint: saved });
-  } catch (error) {
-    console.error('[checkpoint-telegram]', error);
-    return NextResponse.json({
-      checkpoint: saved,
-      warning: 'Checkpoint saved, but the Telegram notification could not be sent.',
-    });
-  }
+  return NextResponse.json({ checkpoint: saved });
 }

@@ -1,18 +1,19 @@
 import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import { createClient } from './server';
+import { getVerifiedUserId } from './auth';
 import type { Profile } from '@/types/database';
 
 /** Returns the authenticated user's profile or redirects to /login. */
 export const requireProfile = cache(async (): Promise<Profile> => {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  const userId = await getVerifiedUserId(supabase);
+  if (!userId) redirect('/login');
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
-    .eq('id', user.id)
+    .select('id, full_name, email, campus, role, group_name, workbook_route, created_at, updated_at')
+    .eq('id', userId)
     .single();
 
   if (!profile) redirect('/login?error=no-profile');

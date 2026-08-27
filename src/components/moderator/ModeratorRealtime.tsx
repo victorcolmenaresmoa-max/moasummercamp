@@ -15,7 +15,7 @@ export function ModeratorRealtime({ userId }: { userId?: string }) {
 
   useRealtime({
     channel: `moa-mod-${userId ?? 'all'}`,
-    debounce: userId ? 2500 : 1200,
+    debounce: userId ? 3500 : 1600,
     tables: [
       ...(userId ? [{ table: 'responses', filter } as const] : []),
       { table: 'checkpoints', filter },

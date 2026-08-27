@@ -1,10 +1,10 @@
 import Image from 'next/image';
-import moaLogo from '../../../public/moa-logo.png';
+import moaLogo from '../../../public/moa-logo.webp';
 
 /**
  * Piezas gráficas de marca MOA Education.
  *
- * El logotipo es el archivo oficial de marca (public/moa-logo.png).
+ * El logotipo es el archivo oficial de marca (public/moa-logo.webp).
  * Las figuras decorativas siguen siendo SVG inline: cero peticiones de red,
  * escalan perfecto y heredan el color con clases de Tailwind.
  */
@@ -14,12 +14,12 @@ import moaLogo from '../../../public/moa-logo.png';
  * El isotipo oficial de MOA Education.
  *
  * Antes esta marca era una "m" dibujada a mano en SVG que solo se PARECIA a la
- * del logo. Ahora se usa el archivo real de marca (public/moa-logo.png), asi
+ * del logo. Ahora se usa el archivo real de marca (public/moa-logo.webp), asi
  * que las proporciones, la curva de la onda y el grosor de los trazos son
  * exactamente los del manual, no una aproximacion.
  *
- * next/image lo sirve optimizado (WebP/AVIF segun el navegador) y con las
- * dimensiones declaradas, de modo que no hay salto de maquetacion al cargar.
+ * El asset ya esta reducido a WebP (128 px) y se sirve directamente, sin pagar
+ * una transformacion dinamica para un logo de apenas 36 px en pantalla.
  */
 export function MoaMark({ className = 'h-9 w-9' }: { className?: string }) {
   return (
@@ -27,6 +27,7 @@ export function MoaMark({ className = 'h-9 w-9' }: { className?: string }) {
       src={moaLogo}
       alt="MOA Education"
       priority
+      unoptimized
       sizes="64px"
       className={`rounded-[22%] object-contain ${className}`}
     />

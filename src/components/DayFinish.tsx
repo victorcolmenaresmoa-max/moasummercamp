@@ -65,7 +65,7 @@ export function DayFinish({
           </p>
         </div>
 
-        <Link href="/lab" prefetch className="btn-primary mt-7 px-7 py-3 text-base">
+        <Link href="/lab" prefetch={false} className="btn-primary mt-7 px-7 py-3 text-base">
           Back to my dashboard
         </Link>
 

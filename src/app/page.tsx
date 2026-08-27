@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getVerifiedUserId } from '@/lib/supabase/auth';
 import { MoaLogo, MoaPattern, Squiggle, Burst, Arc, Quote } from '@/components/brand/Moa';
 
 export const dynamic = 'force-dynamic';
@@ -14,10 +15,10 @@ const DAYS = [
 
 export default async function Home() {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const userId = await getVerifiedUserId(supabase);
 
-  if (user) {
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (userId) {
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', userId).single();
     redirect(!profile || profile.role === 'participant' ? '/lab' : '/moderator');
   }
 

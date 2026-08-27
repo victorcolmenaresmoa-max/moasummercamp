@@ -112,4 +112,12 @@
   .no-print { display: none !important; }
   body { background: #fff !important; background-image: none !important; }
   .card { box-shadow: none; border-color: #ddd; }
+  .content-auto { content-visibility: visible !important; contain-intrinsic-size: auto !important; }
+}
+
+/* Las paginas de Lab son largas. El navegador puede saltarse layout/paint de
+   bloques muy por debajo del viewport hasta que el usuario se acerque. */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 620px;
 }

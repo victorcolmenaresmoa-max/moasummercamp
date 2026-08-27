@@ -17,7 +17,6 @@ export function SignOutButton({ tone = 'dark' }: { tone?: 'dark' | 'light' }) {
         setBusy(true);
         await createClient().auth.signOut();
         router.replace('/login');
-        router.refresh();
       }}
     >
       {busy ? '…' : 'Sign out'}

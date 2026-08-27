@@ -11,7 +11,7 @@ import { useRealtime } from '@/lib/useRealtime';
 export function LabRealtime({ userId }: { userId: string }) {
   useRealtime({
     channel: `moa-lab-${userId}`,
-    debounce: 300,
+    debounce: 500,
     tables: [
       { table: 'day_access' },
       { table: 'participant_day_access', filter: `user_id=eq.${userId}` },

@@ -13,7 +13,7 @@ import { LabRealtime } from '@/components/LabRealtime';
 import { ArrowLeftIcon } from '@/components/ui/Icons';
 import { MoaPattern } from '@/components/brand/Moa';
 import { hasContent, pct } from '@/lib/utils';
-import type { CheckpointRow, ResponseRow } from '@/types/database';
+import type { CheckpointRow } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,13 +36,13 @@ export default async function DayPage({ params }: { params: { day: string } }) {
   if (!day) notFound();
 
   const supabase = createClient();
+  const staff = isStaff(profile);
   const [{ data: responses }, { data: checkpoints }, openDays] = await Promise.all([
-    supabase.from('responses').select('*').eq('user_id', profile.id).eq('day', dayNumber),
+    supabase.from('responses').select('field_key, value').eq('user_id', profile.id).eq('day', dayNumber),
     supabase.from('checkpoints').select('*').eq('user_id', profile.id).eq('day', dayNumber),
-    getOpenDays(),
+    staff ? Promise.resolve(new Set<number>([1, 2, 3, 4])) : getOpenDays(),
   ]);
 
-  const staff = isStaff(profile);
   const unlocked = staff || openDays.has(dayNumber);
 
   if (!unlocked) {
@@ -54,7 +54,7 @@ export default async function DayPage({ params }: { params: { day: string } }) {
     );
   }
 
-  const answers = new Map((responses ?? []).map((r: ResponseRow) => [r.field_key, r.value]));
+  const answers = new Map((responses ?? []).map((r) => [r.field_key, r.value]));
   const cps = new Map((checkpoints ?? []).map((c: CheckpointRow) => [c.checkpoint_number, c]));
   const done = (responses ?? []).filter((r) => hasContent(r.value)).length;
   const total = totalFields(dayNumber, route);
@@ -68,7 +68,7 @@ export default async function DayPage({ params }: { params: { day: string } }) {
 
       <Link
         href="/lab"
-        prefetch
+        prefetch={false}
         className="inline-flex items-center gap-2 text-sm font-bold text-teal-600 transition hover:text-teal-800 no-print"
       >
         <ArrowLeftIcon className="h-4 w-4" />
@@ -109,7 +109,7 @@ export default async function DayPage({ params }: { params: { day: string } }) {
 
       {day.sections.map((section) => (
         <div key={section.id} className="space-y-8">
-          <section className="card p-6 sm:p-7" id={section.id}>
+          <section className="card content-auto p-6 sm:p-7" id={section.id}>
             <div className="flex flex-wrap items-baseline justify-between gap-2 border-b-2 border-teal-50 pb-3">
               <h2 className="h-display text-xl text-teal-900">{section.title}</h2>
               {section.minutes && <span className="chip bg-teal-50 text-teal-600">{section.minutes} min</span>}
@@ -148,7 +148,7 @@ export default async function DayPage({ params }: { params: { day: string } }) {
         </div>
       ))}
 
-      <section className="card p-6 sm:p-7">
+      <section className="card content-auto p-6 sm:p-7">
         <h2 className="h-display text-xl text-teal-900">MY EVIDENCE FOR TODAY</h2>
         <ul className="mt-4 space-y-2 text-sm text-ink/75">
           {day.finalChecklist.map((c) => (

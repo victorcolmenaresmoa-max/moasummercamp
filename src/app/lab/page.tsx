@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireProfile } from '@/lib/supabase/session';
-import { getOpenDays } from '@/lib/access';
+import { getOpenDays, isStaff } from '@/lib/access';
 import {
   getWorkbook,
   totalFields,
@@ -33,16 +33,26 @@ export default async function LabHome() {
   const cpPerDay = checkpointsPerDay(route);
   const supabase = createClient();
 
+  const staff = isStaff(profile);
   const [{ data: responses }, { data: checkpoints }, openDays] = await Promise.all([
     supabase.from('responses').select('day, value').eq('user_id', profile.id),
     supabase.from('checkpoints').select('day, status, submitted_at').eq('user_id', profile.id),
-    getOpenDays(),
+    staff ? Promise.resolve(new Set<number>([1, 2, 3, 4])) : getOpenDays(),
   ]);
 
-  const answered = (day: number) => (responses ?? []).filter((r) => r.day === day && hasContent(r.value)).length;
-  const approved = (day: number) => (checkpoints ?? []).filter((c) => c.day === day && c.status === 'approved').length;
-  const pendingReview = (day: number) =>
-    (checkpoints ?? []).filter((c) => c.day === day && c.status === 'pending' && c.submitted_at).length;
+  const answeredByDay: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  for (const row of responses ?? []) if (hasContent(row.value)) answeredByDay[row.day] = (answeredByDay[row.day] ?? 0) + 1;
+
+  const approvedByDay: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  const pendingByDay: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  for (const cp of checkpoints ?? []) {
+    if (cp.status === 'approved') approvedByDay[cp.day] = (approvedByDay[cp.day] ?? 0) + 1;
+    else if (cp.status === 'pending' && cp.submitted_at) pendingByDay[cp.day] = (pendingByDay[cp.day] ?? 0) + 1;
+  }
+
+  const answered = (day: number) => answeredByDay[day] ?? 0;
+  const approved = (day: number) => approvedByDay[day] ?? 0;
+  const pendingReview = (day: number) => pendingByDay[day] ?? 0;
 
   const totalDone = workbook.reduce((a, d) => a + answered(d.day), 0);
   const totalAll = workbook.reduce((a, d) => a + totalFields(d.day, route), 0);
@@ -87,7 +97,7 @@ export default async function LabHome() {
       {activeDay && (
         <Link
           href={`/lab/${activeDay.day}`}
-          prefetch
+          prefetch={false}
           className="group flex items-center justify-between gap-4 rounded-3xl bg-sun-400 px-6 py-4 text-plum-500 shadow-pop transition hover:-translate-y-0.5"
         >
           <span>
@@ -163,7 +173,7 @@ export default async function LabHome() {
               <Link
                 key={d.day}
                 href={`/lab/${d.day}`}
-                prefetch
+                prefetch={false}
                 style={style}
                 className={`${base} group transition hover:-translate-y-1 hover:shadow-moa-lg`}
               >

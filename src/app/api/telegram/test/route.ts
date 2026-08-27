@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getVerifiedUserId } from '@/lib/supabase/auth';
 import { escapeTelegramHtml, sendTelegramMessage } from '@/lib/telegram';
 
 export const runtime = 'nodejs';
@@ -7,10 +8,10 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
+  const userId = await getVerifiedUserId(supabase);
+  if (!userId) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
 
-  const { data: profile } = await supabase.from('profiles').select('full_name, role').eq('id', user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('full_name, role').eq('id', userId).single();
   if (!profile || (profile.role !== 'moderator' && profile.role !== 'admin')) {
     return NextResponse.json({ error: 'Staff access is required.' }, { status: 403 });
   }

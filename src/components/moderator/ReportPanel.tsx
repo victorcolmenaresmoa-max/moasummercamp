@@ -6,6 +6,8 @@ import { SparkIcon } from '@/components/ui/Icons';
 import { MoaPattern } from '@/components/brand/Moa';
 import type { AiReportRow } from '@/types/database';
 
+export type AiReportDisplay = Omit<AiReportRow, 'raw' | 'requested_by'>;
+
 export function ReportPanel({
   participantId,
   participantName,
@@ -13,7 +15,7 @@ export function ReportPanel({
 }: {
   participantId: string;
   participantName: string;
-  report: AiReportRow | null;
+  report: AiReportDisplay | null;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);

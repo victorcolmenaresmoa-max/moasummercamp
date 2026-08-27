@@ -1,16 +1,17 @@
-'use client';
-
-import { useState } from 'react';
 import { Quote, Squiggle } from '@/components/brand/Moa';
+import { ReadingSizeControls } from '@/components/ReadingSizeControls';
 import type { ReadingBlock } from '@/lib/workbook';
 
-const SIZES = ['text-base', 'text-lg', 'text-xl'] as const;
-
+/**
+ * El texto completo se renderiza en servidor. Solo los dos botones de tamano
+ * hidratan JavaScript; antes TODO el reading (incluidos parrafos y tablas)
+ * cruzaba el limite de un Client Component y se serializaba para hidratarse.
+ */
 export function ReadingText({ title, blocks }: { title: string; blocks: ReadingBlock[] }) {
-  const [size, setSize] = useState(0);
+  const targetId = 'moa-reading-body';
 
   return (
-    <article className="card overflow-hidden">
+    <article className="card content-auto overflow-hidden">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-teal-50 px-6 py-5 sm:px-7">
         <div className="flex items-start gap-3">
           <Squiggle className="mt-1.5 h-5 w-16 shrink-0 text-coral-500" />
@@ -20,31 +21,10 @@ export function ReadingText({ title, blocks }: { title: string; blocks: ReadingB
           </div>
         </div>
 
-        {/* Control de tamaño: muchos docentes leen desde el móvil. */}
-        <div className="flex items-center gap-1 rounded-full bg-teal-50 p-1 no-print">
-          <button
-            type="button"
-            className="rounded-full px-3 py-1 text-xs font-extrabold text-teal-700 transition hover:bg-white disabled:opacity-35"
-            disabled={size === 0}
-            onClick={() => setSize((s) => Math.max(0, s - 1))}
-            aria-label="Decrease text size"
-          >
-            A−
-          </button>
-          <span className="text-[11px] font-extrabold text-teal-500">{size + 1}/3</span>
-          <button
-            type="button"
-            className="rounded-full px-3 py-1 text-xs font-extrabold text-teal-700 transition hover:bg-white disabled:opacity-35"
-            disabled={size === SIZES.length - 1}
-            onClick={() => setSize((s) => Math.min(SIZES.length - 1, s + 1))}
-            aria-label="Increase text size"
-          >
-            A+
-          </button>
-        </div>
+        <ReadingSizeControls targetId={targetId} />
       </div>
 
-      <div className={`reading px-6 py-6 text-ink/90 sm:px-7 ${SIZES[size]}`}>
+      <div id={targetId} className="reading px-6 py-6 text-base text-ink/90 sm:px-7">
         {blocks.map((b, i) => {
           if (b.type === 'h') {
             return (

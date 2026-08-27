@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import { SparkIcon, CheckIcon } from '@/components/ui/Icons';
 import { Quote } from '@/components/brand/Moa';
 import type { Field } from '@/lib/workbook';
@@ -17,7 +18,7 @@ type Props = {
  * El participante puede copiarlo (ChatGPT/Claude/Gemini) o ejecutarlo aqui:
  * en ese caso la interaccion queda registrada y el moderador puede verla.
  */
-export function AiPromptCard({ field, day, sectionId }: Props) {
+export function AiPromptCard({ field, day, sectionId, userId }: Props) {
   const [open, setOpen] = useState(false);
   const [extra, setExtra] = useState('');
   const [answer, setAnswer] = useState<string | null>(null);
@@ -40,7 +41,22 @@ export function AiPromptCard({ field, day, sectionId }: Props) {
         setFailed(true);
         setAnswer(json?.error ?? 'The assistant is not available right now.');
       } else {
+        // Mostramos la respuesta en cuanto llega. El registro para el
+        // moderador se guarda despues y no agrega otra espera a la IA.
         setAnswer(json.text);
+        void createClient()
+          .from('ai_interactions')
+          .insert({
+            user_id: userId,
+            day,
+            section_id: sectionId,
+            prompt: extra ? `${field.prompt}
+[contexto] ${extra}` : field.prompt,
+            response: json.text,
+          })
+          .then(({ error }) => {
+            if (error) console.error('[ai-interaction-log]', error.message);
+          });
       }
     } catch {
       setFailed(true);
