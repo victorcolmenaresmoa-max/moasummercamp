@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { LockIcon, UnlockIcon } from '@/components/ui/Icons';
 import { Squiggle } from '@/components/brand/Moa';
 import type { Campus, DayAccessRow } from '@/types/database';
-import { WORKBOOK } from '@/lib/workbook';
+import { WORKBOOK_DAY_NUMBERS } from '@/lib/workbook';
 
 type Scope = { key: string; label: string; campus: Campus | null };
 
@@ -117,20 +117,20 @@ export function DayAccessControl({ rows }: { rows: DayAccessRow[] }) {
         )}
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {WORKBOOK.map((d) => {
-            const open = isOpen(scope.campus, d.day);
-            const inherited = inherits(scope.campus, d.day);
+          {WORKBOOK_DAY_NUMBERS.map((day) => {
+            const open = isOpen(scope.campus, day);
+            const inherited = inherits(scope.campus, day);
             return (
               <div
-                key={d.day}
+                key={day}
                 className={`rounded-3xl border-2 p-4 transition ${
                   open ? 'border-moss-500/30 bg-moss-50' : 'border-teal-100 bg-white'
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="eyebrow text-teal-600">Day {d.day}</p>
-                    <p className="h-display mt-1 text-base text-teal-900">{d.theme}</p>
+                    <p className="eyebrow text-teal-600">Day {day}</p>
+                    <p className="h-display mt-1 text-base text-teal-900">Reading Lab</p>
                   </div>
                   <span
                     className={`chip ${open ? 'bg-moss-500 text-white' : 'bg-plum-50 text-plum-400'}`}
@@ -148,11 +148,11 @@ export function DayAccessControl({ rows }: { rows: DayAccessRow[] }) {
 
                 <button
                   type="button"
-                  disabled={busy === d.day}
-                  onClick={() => toggle(d.day, !open)}
+                  disabled={busy === day}
+                  onClick={() => toggle(day, !open)}
                   className={`mt-4 w-full ${open ? 'btn-ghost' : 'btn-primary'} btn-sm py-2`}
                 >
-                  {busy === d.day ? '…' : open ? 'Cerrar día' : 'Abrir día'}
+                  {busy === day ? '…' : open ? 'Cerrar día' : 'Abrir día'}
                 </button>
               </div>
             );

@@ -10,7 +10,14 @@ const CAMP_CODE = process.env.NEXT_PUBLIC_CAMP_CODE ?? 'MOA2026';
 
 export default function SignupPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ fullName: '', campus: 'merida', email: '', password: '', code: '' });
+  const [form, setForm] = useState({
+    fullName: '',
+    campus: 'merida',
+    workbookRoute: 'a2_b1',
+    email: '',
+    password: '',
+    code: '',
+  });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +37,13 @@ export default function SignupPage() {
     const { error } = await supabase.auth.signUp({
       email: form.email.trim(),
       password: form.password,
-      options: { data: { full_name: form.fullName.trim(), campus: form.campus } },
+      options: {
+        data: {
+          full_name: form.fullName.trim(),
+          campus: form.campus,
+          workbook_route: form.workbookRoute,
+        },
+      },
     });
 
     if (error) {
@@ -45,7 +58,7 @@ export default function SignupPage() {
   return (
     <AuthShell
       title="Mi registro"
-      subtitle="Tu nombre y tu sede quedan en la portada de tu workbook digital."
+      subtitle="Selecciona tu sede y la ruta asignada por tu moderador."
       footer={
         <>
           ¿Ya tienes cuenta?{' '}
@@ -87,6 +100,32 @@ export default function SignupPage() {
                 }`}
               >
                 {c.l}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="label">Mi ruta / workbook</label>
+          <p className="mt-1 text-xs font-semibold text-ink/45">Elige la ruta que te indicó tu moderador.</p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {[
+              { v: 'a2_b1', l: 'A2–B1', sub: 'Route 1' },
+              { v: 'b2_c1', l: 'B2–C1', sub: 'Route 2' },
+            ].map((r) => (
+              <button
+                key={r.v}
+                type="button"
+                onClick={() => set('workbookRoute', r.v)}
+                aria-pressed={form.workbookRoute === r.v}
+                className={`rounded-2xl border-2 px-4 py-3 text-left transition ${
+                  form.workbookRoute === r.v
+                    ? 'border-plum-500 bg-plum-500 text-white shadow-moa'
+                    : 'border-plum-100 bg-white text-plum-600 hover:border-plum-200'
+                }`}
+              >
+                <span className="block text-sm font-extrabold">{r.l}</span>
+                <span className={`block text-xs font-semibold ${form.workbookRoute === r.v ? 'text-white/70' : 'text-ink/40'}`}>{r.sub}</span>
               </button>
             ))}
           </div>

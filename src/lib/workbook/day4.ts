@@ -34,6 +34,7 @@ export const day4: Day = {
       { type: 'quote', text: 'And after ten years, the question should not only be "How long have I been teaching?" A better question is: "How have I grown as a teacher, and what am I ready to learn next?"' },
     ],
   },
+  readingAfterSectionId: 'd4_part1',
   sections: [
     {
       id: 'd4_part1',

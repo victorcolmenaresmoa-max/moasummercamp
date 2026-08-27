@@ -55,6 +55,8 @@ export type Day = {
   schedule: string;
   objectives: string[];
   reading: { title: string; blocks: ReadingBlock[] };
+  /** Coloca la lectura despues de esta seccion. Si se omite, aparece antes de las secciones. */
+  readingAfterSectionId?: string;
   sections: Section[];
   finalChecklist: string[];
 };

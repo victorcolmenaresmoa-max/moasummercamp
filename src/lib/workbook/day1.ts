@@ -30,6 +30,7 @@ export const day1: Day = {
       { type: 'quote', text: 'And that journey is not finished yet.' },
     ],
   },
+  readingAfterSectionId: 'd1_part1',
   sections: [
     {
       id: 'd1_part1',

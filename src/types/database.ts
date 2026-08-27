@@ -1,6 +1,7 @@
 export type Campus = 'merida' | 'el_vigia';
 export type UserRole = 'participant' | 'moderator' | 'admin';
 export type CheckpointStatus = 'pending' | 'approved' | 'needs_work';
+export type WorkbookRoute = 'a2_b1' | 'b2_c1';
 
 export type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
@@ -11,6 +12,7 @@ export type Profile = {
   campus: Campus | null;
   role: UserRole;
   group_name: string | null;
+  workbook_route: WorkbookRoute;
   created_at: string;
   updated_at: string;
 };
@@ -38,6 +40,9 @@ export type CheckpointRow = {
   moderator_initials: string | null;
   comments: string | null;
   approved_at: string | null;
+  submitted_at: string | null;
+  notification_sent_at: string | null;
+  submission_count: number;
   updated_at: string;
 };
 
@@ -91,11 +96,13 @@ export type ParticipantProgressRow = {
   full_name: string;
   campus: Campus | null;
   group_name: string | null;
+  workbook_route: WorkbookRoute;
   day1_answers: number;
   day2_answers: number;
   day3_answers: number;
   day4_answers: number;
   checkpoints_approved: number;
+  checkpoints_pending_review: number;
   last_report_at: string | null;
   last_activity: string | null;
 };

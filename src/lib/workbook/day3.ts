@@ -43,6 +43,7 @@ export const day3: Day = {
       { type: 'quote', text: 'Good teaching decisions begin with good questions: What is happening? What evidence do I have? What does the evidence tell me? What should I do next?' },
     ],
   },
+  readingAfterSectionId: 'd3_part1',
   sections: [
     {
       id: 'd3_part1',

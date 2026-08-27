@@ -2,7 +2,7 @@
   "name": "moa-reading-lab",
   "version": "1.0.0",
   "private": true,
-  "description": "Reading Lab digital workbook - MOA Education Immersive Summer Camp 2026 (Route 1, Teachers A2/B1)",
+  "description": "Reading Lab digital workbook - MOA Education Immersive Summer Camp 2026 (Routes A2/B1 and B2/C1)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

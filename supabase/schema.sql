@@ -1,6 +1,6 @@
 -- ============================================================================
 -- MOA EDUCATION | IMMERSIVE SUMMER CAMP 2026
--- Reading Lab - Route 1 (Teachers A2/B1)
+-- Reading Lab - Routes 1 and 2 (Teachers A2/B1 + B2/C1)
 -- Esquema completo para Supabase (PostgreSQL 15+)
 -- Ejecutar TODO este archivo en: Supabase Dashboard > SQL Editor > New query
 -- Es idempotente: puedes volver a ejecutarlo sin romper nada.
@@ -33,6 +33,7 @@ create table if not exists public.profiles (
   campus        public.campus,
   role          public.user_role not null default 'participant',
   group_name    text,                       -- opcional: "Grupo A", "Aula 3"...
+  workbook_route text not null default 'a2_b1' check (workbook_route in ('a2_b1', 'b2_c1')),
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
@@ -79,6 +80,9 @@ create table if not exists public.checkpoints (
   moderator_initials text,
   comments           text,
   approved_at        timestamptz,
+  submitted_at       timestamptz,
+  notification_sent_at timestamptz,
+  submission_count   integer not null default 0,
   updated_at         timestamptz not null default now(),
   unique (user_id, day, checkpoint_number)
 );
@@ -145,14 +149,22 @@ create trigger trg_checkpoints_updated before update on public.checkpoints for e
 -- Los metadatos llegan desde supabase.auth.signUp({ options: { data: {...} } }).
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  requested_route text;
 begin
-  insert into public.profiles (id, full_name, email, campus, role)
+  requested_route := coalesce(new.raw_user_meta_data ->> 'workbook_route', 'a2_b1');
+  if requested_route not in ('a2_b1', 'b2_c1') then
+    requested_route := 'a2_b1';
+  end if;
+
+  insert into public.profiles (id, full_name, email, campus, role, workbook_route)
   values (
     new.id,
     coalesce(new.raw_user_meta_data ->> 'full_name', split_part(new.email, '@', 1)),
     new.email,
     nullif(new.raw_user_meta_data ->> 'campus', '')::public.campus,
-    'participant'                    -- el rol staff SIEMPRE se asigna a mano (ver seed_staff.sql)
+    'participant',
+    requested_route
   )
   on conflict (id) do nothing;
   return new;
@@ -275,21 +287,25 @@ returns boolean language sql immutable as $$
   false);
 $$;
 
-create or replace view public.participant_progress
+drop view if exists public.participant_progress;
+create view public.participant_progress
 with (security_invoker = true) as
 select
   p.id,
   p.full_name,
   p.campus,
   p.group_name,
+  p.workbook_route,
   count(r.id) filter (where r.day = 1 and public.has_content(r.value)) as day1_answers,
   count(r.id) filter (where r.day = 2 and public.has_content(r.value)) as day2_answers,
   count(r.id) filter (where r.day = 3 and public.has_content(r.value)) as day3_answers,
   count(r.id) filter (where r.day = 4 and public.has_content(r.value)) as day4_answers,
   (select count(*) from public.checkpoints c
-     where c.user_id = p.id and c.status = 'approved')                 as checkpoints_approved,
+     where c.user_id = p.id and c.status = 'approved') as checkpoints_approved,
+  (select count(*) from public.checkpoints c
+     where c.user_id = p.id and c.status = 'pending' and c.submitted_at is not null) as checkpoints_pending_review,
   (select max(generated_at) from public.ai_reports a where a.user_id = p.id) as last_report_at,
-  max(r.updated_at)                                                    as last_activity
+  max(r.updated_at) as last_activity
 from public.profiles p
 left join public.responses r on r.user_id = p.id
 where p.role = 'participant'

@@ -1,6 +1,6 @@
 # MOA Reading Lab · Immersive Summer Camp 2026
 
-Workbook digital del **Reading Lab, Ruta 1 (Teachers A2/B1)**: 4 días (Identity, Clarity, Decision, Growth),
+Workbook digital del **Reading Lab MOA 2026** con dos rutas: **Ruta 1 (Teachers A2/B1)** y **Ruta 2 (Teachers B2/C1)**, cada una con 4 días,
 panel de moderador en tiempo real y un evaluador pedagógico con IA que analiza el workbook completo de cada docente.
 
 > Read first. Think second. Ask AI third.

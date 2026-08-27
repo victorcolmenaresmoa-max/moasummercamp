@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireProfile } from '@/lib/supabase/session';
 import { getOpenDays, isStaff } from '@/lib/access';
-import { getDay, totalFields } from '@/lib/workbook';
+import { getDay, totalFields, normalizeWorkbookRoute } from '@/lib/workbook';
 import { ReadingText } from '@/components/ReadingText';
 import { WorkbookField } from '@/components/WorkbookField';
 import { CheckpointBox } from '@/components/CheckpointBox';
@@ -25,18 +25,17 @@ const HEADER_TONE: Record<number, string> = {
 };
 
 export async function generateMetadata({ params }: { params: { day: string } }) {
-  const day = getDay(Number(params.day));
-  return { title: day ? `Day ${day.day} · ${day.theme}` : 'Reading Lab' };
+  return { title: `Day ${params.day} · Reading Lab` };
 }
 
 export default async function DayPage({ params }: { params: { day: string } }) {
   const dayNumber = Number(params.day);
-  const day = getDay(dayNumber);
+  const profile = await requireProfile();
+  const route = normalizeWorkbookRoute(profile.workbook_route);
+  const day = getDay(dayNumber, route);
   if (!day) notFound();
 
-  const profile = await requireProfile();
   const supabase = createClient();
-
   const [{ data: responses }, { data: checkpoints }, openDays] = await Promise.all([
     supabase.from('responses').select('*').eq('user_id', profile.id).eq('day', dayNumber),
     supabase.from('checkpoints').select('*').eq('user_id', profile.id).eq('day', dayNumber),
@@ -46,9 +45,6 @@ export default async function DayPage({ params }: { params: { day: string } }) {
   const staff = isStaff(profile);
   const unlocked = staff || openDays.has(dayNumber);
 
-  // ---------------------------------------------------------------- CANDADO
-  // Doble muro: aquí no se pinta el contenido, y en Postgres la política RLS
-  // rechaza cualquier escritura a este día. Ni copiando la URL se entra.
   if (!unlocked) {
     return (
       <>
@@ -60,16 +56,16 @@ export default async function DayPage({ params }: { params: { day: string } }) {
 
   const answers = new Map((responses ?? []).map((r: ResponseRow) => [r.field_key, r.value]));
   const cps = new Map((checkpoints ?? []).map((c: CheckpointRow) => [c.checkpoint_number, c]));
-
   const done = (responses ?? []).filter((r) => hasContent(r.value)).length;
-  const total = totalFields(dayNumber);
+  const total = totalFields(dayNumber, route);
   const progress = pct(done, total);
+
+  const renderReadingBeforeSections = !day.readingAfterSectionId;
 
   return (
     <div className="space-y-8">
       <LabRealtime userId={profile.id} />
 
-      {/* --------------------------------------------------------- MIGA DE PAN */}
       <Link
         href="/lab"
         prefetch
@@ -79,7 +75,6 @@ export default async function DayPage({ params }: { params: { day: string } }) {
         Mi panel
       </Link>
 
-      {/* ------------------------------------------------------ CABECERA DEL DÍA */}
       <header className="card relative isolate overflow-hidden">
         <div className={`relative bg-gradient-to-br px-6 py-7 text-white sm:px-8 ${HEADER_TONE[day.day]}`}>
           <MoaPattern variant="soft" />
@@ -110,40 +105,49 @@ export default async function DayPage({ params }: { params: { day: string } }) {
         </div>
       </header>
 
-      <ReadingText title={day.reading.title} blocks={day.reading.blocks} />
+      {renderReadingBeforeSections && <ReadingText title={day.reading.title} blocks={day.reading.blocks} />}
 
-      {/* ------------------------------------------------------------ SECCIONES */}
       {day.sections.map((section) => (
-        <section key={section.id} className="card p-6 sm:p-7" id={section.id}>
-          <div className="flex flex-wrap items-baseline justify-between gap-2 border-b-2 border-teal-50 pb-3">
-            <h2 className="h-display text-xl text-teal-900">{section.title}</h2>
-            {section.minutes && <span className="chip bg-teal-50 text-teal-600">{section.minutes} min</span>}
-          </div>
-
-          {section.intro && <p className="mt-3 text-sm leading-relaxed text-ink/65">{section.intro}</p>}
-
-          <div className="mt-6 space-y-7">
-            {section.fields.map((field) => (
-              <WorkbookField
-                key={field.key}
-                field={field}
-                userId={profile.id}
-                day={day.day}
-                sectionId={section.id}
-                initial={answers.get(field.key) ?? {}}
-              />
-            ))}
-          </div>
-
-          {section.checkpoint && (
-            <div className="mt-7">
-              <CheckpointBox checkpoint={section.checkpoint} row={cps.get(section.checkpoint.number)} />
+        <div key={section.id} className="space-y-8">
+          <section className="card p-6 sm:p-7" id={section.id}>
+            <div className="flex flex-wrap items-baseline justify-between gap-2 border-b-2 border-teal-50 pb-3">
+              <h2 className="h-display text-xl text-teal-900">{section.title}</h2>
+              {section.minutes && <span className="chip bg-teal-50 text-teal-600">{section.minutes} min</span>}
             </div>
+
+            {section.intro && <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink/65">{section.intro}</p>}
+
+            <div className="mt-6 space-y-7">
+              {section.fields.map((field) => (
+                <WorkbookField
+                  key={field.key}
+                  field={field}
+                  userId={profile.id}
+                  day={day.day}
+                  sectionId={section.id}
+                  initial={answers.get(field.key) ?? {}}
+                />
+              ))}
+            </div>
+
+            {section.checkpoint && (
+              <div className="mt-7">
+                <CheckpointBox
+                  checkpoint={section.checkpoint}
+                  row={cps.get(section.checkpoint.number)}
+                  day={day.day}
+                  sectionId={section.id}
+                />
+              </div>
+            )}
+          </section>
+
+          {day.readingAfterSectionId === section.id && (
+            <ReadingText title={day.reading.title} blocks={day.reading.blocks} />
           )}
-        </section>
+        </div>
       ))}
 
-      {/* --------------------------------------------------- CHECKLIST FINAL */}
       <section className="card p-6 sm:p-7">
         <h2 className="h-display text-xl text-teal-900">MY EVIDENCE FOR TODAY</h2>
         <ul className="mt-4 space-y-2 text-sm text-ink/75">
@@ -158,7 +162,6 @@ export default async function DayPage({ params }: { params: { day: string } }) {
         </ul>
       </section>
 
-      {/* ------------------------------------- CIERRE: SIEMPRE VUELVE AL PANEL */}
       <DayFinish day={day.day} theme={day.theme} progress={progress} done={done} total={total} />
     </div>
   );

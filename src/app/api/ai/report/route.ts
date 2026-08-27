@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { callLLMJson, LlmError, MODEL } from '@/lib/ai/llm';
 import { REPORT_SCHEMA, normalizeReport, type ReportJson } from '@/lib/ai/schema';
-import { EVALUATOR_SYSTEM, buildWorkbookTranscript, evaluatorUserMessage } from '@/lib/ai/prompts';
+import { evaluatorSystem, buildWorkbookTranscript, evaluatorUserMessage } from '@/lib/ai/prompts';
 import { hasContent } from '@/lib/utils';
 import type { ResponseRow } from '@/types/database';
 
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 
   const { data: target } = await admin
     .from('profiles')
-    .select('id, full_name, campus')
+    .select('id, full_name, campus, workbook_route')
     .eq('id', targetId)
     .single();
   if (!target) return NextResponse.json({ error: 'Participante no encontrado.' }, { status: 404 });
@@ -74,14 +74,14 @@ export async function POST(req: Request) {
     );
   }
 
-  const transcript = buildWorkbookTranscript(rows, target.full_name, target.campus);
+  const transcript = buildWorkbookTranscript(rows, target.full_name, target.campus, target.workbook_route);
   const aiUsage = (interactions ?? [])
     .map((i: any) => `Dia ${i.day ?? '?'}: ${String(i.prompt).slice(0, 180)}`)
     .join('\n');
 
   try {
     const { data, raw } = await callLLMJson<ReportJson>({
-      system: EVALUATOR_SYSTEM,
+      system: evaluatorSystem(target.workbook_route),
       user: evaluatorUserMessage(transcript, aiUsage),
       schema: REPORT_SCHEMA,
       maxTokens: 4000,

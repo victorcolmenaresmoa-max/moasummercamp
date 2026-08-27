@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { LockIcon, UnlockIcon } from '@/components/ui/Icons';
-import { WORKBOOK } from '@/lib/workbook';
+import { WORKBOOK_DAY_NUMBERS } from '@/lib/workbook';
 import type { ParticipantDayAccessRow } from '@/types/database';
 
 /**
@@ -81,17 +81,17 @@ export function ParticipantDayOverride({
       )}
 
       <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-        {WORKBOOK.map((d) => {
-          const ov = overrideFor(d.day);
-          const open = isOpen(d.day);
+        {WORKBOOK_DAY_NUMBERS.map((day) => {
+          const ov = overrideFor(day);
+          const open = isOpen(day);
           return (
             <div
-              key={d.day}
+              key={day}
               className={`rounded-2xl border-2 p-3 ${open ? 'border-moss-500/30 bg-moss-50' : 'border-teal-100'}`}
             >
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-extrabold text-teal-800">
-                  Day {d.day} · {d.theme}
+                  Day {day} · Reading Lab
                 </p>
                 <span className={open ? 'text-moss-600' : 'text-plum-300'}>
                   {open ? <UnlockIcon className="h-4 w-4" /> : <LockIcon className="h-4 w-4" />}
@@ -105,17 +105,17 @@ export function ParticipantDayOverride({
               <div className="mt-2.5 flex gap-1.5">
                 <button
                   type="button"
-                  disabled={busy === d.day}
-                  onClick={() => setOverride(d.day, !open)}
+                  disabled={busy === day}
+                  onClick={() => setOverride(day, !open)}
                   className={`${open ? 'btn-ghost' : 'btn-primary'} btn-sm grow py-1.5`}
                 >
-                  {busy === d.day ? '…' : open ? 'Cerrar' : 'Abrir'}
+                  {busy === day ? '…' : open ? 'Cerrar' : 'Abrir'}
                 </button>
                 {ov && (
                   <button
                     type="button"
-                    disabled={busy === d.day}
-                    onClick={() => setOverride(d.day, null)}
+                    disabled={busy === day}
+                    onClick={() => setOverride(day, null)}
                     title="Quitar la excepción y volver a la regla general"
                     className="btn-ghost btn-sm py-1.5"
                   >

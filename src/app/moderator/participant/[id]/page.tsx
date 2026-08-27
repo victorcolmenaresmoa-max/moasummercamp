@@ -2,13 +2,20 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireStaff } from '@/lib/supabase/session';
-import { WORKBOOK, CAMPUS_LABELS, totalFields } from '@/lib/workbook';
+import {
+  getWorkbook,
+  CAMPUS_LABELS,
+  totalFields,
+  normalizeWorkbookRoute,
+  WORKBOOK_ROUTE_LABELS,
+} from '@/lib/workbook';
 import { AnswerValue } from '@/components/moderator/AnswerValue';
 import { CheckpointApproval } from '@/components/moderator/CheckpointApproval';
 import { ReportPanel } from '@/components/moderator/ReportPanel';
 import { ModeratorRealtime } from '@/components/moderator/ModeratorRealtime';
 import { ParticipantDayOverride } from '@/components/moderator/ParticipantDayOverride';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { Badge } from '@/components/ui/Badge';
 import { ArrowLeftIcon } from '@/components/ui/Icons';
 import { hasContent, pct, timeAgo } from '@/lib/utils';
 import type {
@@ -34,10 +41,13 @@ export default async function ParticipantDetail({
 
   const { data: participant } = await supabase
     .from('profiles')
-    .select('id, full_name, email, campus, role')
+    .select('id, full_name, email, campus, role, workbook_route')
     .eq('id', params.id)
     .single();
   if (!participant) notFound();
+
+  const route = normalizeWorkbookRoute(participant.workbook_route);
+  const workbook = getWorkbook(route);
 
   const [
     { data: responses },
@@ -59,12 +69,11 @@ export default async function ParticipantDetail({
   const cps = new Map((checkpoints ?? []).map((c: CheckpointRow) => [`${c.day}-${c.checkpoint_number}`, c]));
   const report = ((reports ?? [])[0] ?? null) as AiReportRow | null;
   const activeDay = Number(searchParams.day ?? 1) || 1;
-  const day = WORKBOOK.find((d) => d.day === activeDay) ?? WORKBOOK[0];
+  const day = workbook.find((d) => d.day === activeDay) ?? workbook[0];
 
-  // Regla efectiva (sin excepciones): sede primero, si no la global.
   const accessRows = (access ?? []) as DayAccessRow[];
   const effectiveOpen: Record<number, boolean> = Object.fromEntries(
-    WORKBOOK.map((d) => {
+    workbook.map((d) => {
       const own = accessRows.find((a) => a.campus && a.campus === participant.campus && a.day === d.day);
       const glob = accessRows.find((a) => a.campus === null && a.day === d.day);
       return [d.day, own?.is_open ?? glob?.is_open ?? false];
@@ -73,6 +82,7 @@ export default async function ParticipantDetail({
 
   const answeredInDay = (d: number) => (responses ?? []).filter((r) => r.day === d && hasContent(r.value)).length;
   const lastActivity = (responses ?? []).map((r) => r.updated_at).sort().at(-1);
+  const pendingReview = (checkpoints ?? []).filter((c) => c.status === 'pending' && c.submitted_at).length;
 
   return (
     <div className="space-y-6">
@@ -87,11 +97,14 @@ export default async function ParticipantDetail({
         Volver al panel
       </Link>
 
-      {/* ----------------------------------------------------------- FICHA */}
       <header className="card p-6">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div>
-            <h1 className="h-display text-2xl text-teal-900">{participant.full_name}</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="h-display text-2xl text-teal-900">{participant.full_name}</h1>
+              <Badge tone="accent">{WORKBOOK_ROUTE_LABELS[route]}</Badge>
+              {pendingReview > 0 && <Badge tone="warn">{pendingReview} por revisar</Badge>}
+            </div>
             <p className="mt-1 text-sm font-semibold text-ink/55">
               {participant.campus ? CAMPUS_LABELS[participant.campus] : 'Sin sede'} · {participant.email} ·
               última actividad {timeAgo(lastActivity)}
@@ -99,8 +112,8 @@ export default async function ParticipantDetail({
           </div>
 
           <div className="grid grid-cols-4 gap-3">
-            {WORKBOOK.map((d) => {
-              const p = pct(answeredInDay(d.day), totalFields(d.day));
+            {workbook.map((d) => {
+              const p = pct(answeredInDay(d.day), totalFields(d.day, route));
               return (
                 <div key={d.day} className="w-16 text-center sm:w-20">
                   <p className="eyebrow text-ink/45">D{d.day}</p>
@@ -122,9 +135,8 @@ export default async function ParticipantDetail({
 
       <ReportPanel participantId={participant.id} participantName={participant.full_name} report={report} />
 
-      {/* ------------------------------------------------------ TABS DE DÍAS */}
       <nav className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1" aria-label="Días">
-        {WORKBOOK.map((d) => (
+        {workbook.map((d) => (
           <Link
             key={d.day}
             href={`/moderator/participant/${params.id}?day=${d.day}`}
@@ -136,7 +148,6 @@ export default async function ParticipantDetail({
         ))}
       </nav>
 
-      {/* --------------------------------------------------- RESPUESTAS DEL DÍA */}
       {day.sections.map((section) => (
         <section key={section.id} className="card p-6">
           <h2 className="h-display text-lg text-teal-900">{section.title}</h2>
@@ -168,7 +179,6 @@ export default async function ParticipantDetail({
         </section>
       ))}
 
-      {/* ---------------------------------------------------------- USO DE IA */}
       <section className="card p-6">
         <h2 className="h-display text-lg text-teal-900">Uso del asistente de IA (últimas 10)</h2>
         {!interactions?.length ? (

@@ -34,6 +34,7 @@ export const day2: Day = {
       { type: 'quote', text: 'That small change in my thinking has made a big difference in my classroom.' },
     ],
   },
+  readingAfterSectionId: 'd2_part1',
   sections: [
     {
       id: 'd2_part1',

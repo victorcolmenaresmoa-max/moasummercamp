@@ -57,13 +57,20 @@ export function CheckpointApproval({ participantId, moderatorId, day, checkpoint
         : 'bg-sun-400 text-plum-500';
 
   return (
-    <div className="rounded-3xl border-2 border-dashed border-teal-200 bg-teal-50/50 p-5">
+    <div id={`checkpoint-${checkpoint.number}`} className="scroll-mt-28 rounded-3xl border-2 border-dashed border-teal-200 bg-teal-50/50 p-5">
       <div className="flex items-center justify-between gap-3">
         <p className="h-display text-sm text-teal-800">CHECKPOINT {checkpoint.number}</p>
         <span className={`chip ${chip}`}>
-          {row?.status === 'approved' ? 'Aprobado' : row?.status === 'needs_work' ? 'Por mejorar' : 'Pendiente'}
+          {row?.status === 'approved' ? 'Aprobado' : row?.status === 'needs_work' ? 'Por mejorar' : row?.submitted_at ? 'En revisión' : 'Pendiente'}
         </span>
       </div>
+
+      {row?.submitted_at && (
+        <p className="mt-3 text-xs font-semibold text-teal-700">
+          Enviado por el participante: {new Date(row.submitted_at).toLocaleString('es-VE')}
+          {row.submission_count > 1 ? ` · envío #${row.submission_count}` : ''}
+        </p>
+      )}
 
       <div className="mt-3.5 space-y-2">
         {checkpoint.items.map((i) => (

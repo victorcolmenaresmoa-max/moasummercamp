@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { callLLM } from '@/lib/ai/llm';
-import { TUTOR_SYSTEM, tutorUserMessage } from '@/lib/ai/prompts';
+import { tutorSystem, tutorUserMessage } from '@/lib/ai/prompts';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -17,10 +17,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Prompt requerido' }, { status: 400 });
   }
 
+  const { data: profile } = await supabase.from('profiles').select('workbook_route').eq('id', user.id).single();
+
   try {
     const text = await callLLM({
-      system: TUTOR_SYSTEM,
-      user: tutorUserMessage(prompt, String(extra).slice(0, 2000), day, sectionId),
+      system: tutorSystem(profile?.workbook_route),
+      user: tutorUserMessage(prompt, String(extra).slice(0, 2000), day, sectionId, profile?.workbook_route),
       maxTokens: 900,
       temperature: 0.4,
     });

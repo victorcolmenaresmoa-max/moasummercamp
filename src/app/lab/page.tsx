@@ -2,7 +2,14 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireProfile } from '@/lib/supabase/session';
 import { getOpenDays } from '@/lib/access';
-import { WORKBOOK, totalFields, CHECKPOINTS_PER_DAY } from '@/lib/workbook';
+import {
+  getWorkbook,
+  totalFields,
+  checkpointsPerDay,
+  normalizeWorkbookRoute,
+  WORKBOOK_ROUTE_TITLES,
+  WORKBOOK_ROUTE_LABELS,
+} from '@/lib/workbook';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Badge } from '@/components/ui/Badge';
 import { LabRealtime } from '@/components/LabRealtime';
@@ -21,39 +28,46 @@ const DAY_TONE: Record<number, { chip: string }> = {
 
 export default async function LabHome() {
   const profile = await requireProfile();
+  const route = normalizeWorkbookRoute(profile.workbook_route);
+  const workbook = getWorkbook(route);
+  const cpPerDay = checkpointsPerDay(route);
   const supabase = createClient();
 
-  // Consultas en paralelo, con solo las columnas necesarias.
   const [{ data: responses }, { data: checkpoints }, openDays] = await Promise.all([
     supabase.from('responses').select('day, value').eq('user_id', profile.id),
-    supabase.from('checkpoints').select('day, status').eq('user_id', profile.id),
+    supabase.from('checkpoints').select('day, status, submitted_at').eq('user_id', profile.id),
     getOpenDays(),
   ]);
 
   const answered = (day: number) => (responses ?? []).filter((r) => r.day === day && hasContent(r.value)).length;
   const approved = (day: number) => (checkpoints ?? []).filter((c) => c.day === day && c.status === 'approved').length;
+  const pendingReview = (day: number) =>
+    (checkpoints ?? []).filter((c) => c.day === day && c.status === 'pending' && c.submitted_at).length;
 
-  const totalDone = [1, 2, 3, 4].reduce((a, d) => a + answered(d), 0);
-  const totalAll = [1, 2, 3, 4].reduce((a, d) => a + totalFields(d), 0);
+  const totalDone = workbook.reduce((a, d) => a + answered(d.day), 0);
+  const totalAll = workbook.reduce((a, d) => a + totalFields(d.day, route), 0);
   const globalPct = pct(totalDone, totalAll);
 
   const firstName = profile.full_name.split(' ')[0];
-  const activeDay = WORKBOOK.find((d) => openDays.has(d.day) && pct(answered(d.day), totalFields(d.day)) < 100);
+  const activeDay = workbook.find(
+    (d) => openDays.has(d.day) && pct(answered(d.day), totalFields(d.day, route)) < 100,
+  );
 
   return (
     <div className="space-y-8">
-      {/* El candado se abre solo cuando el moderador activa el dia. */}
       <LabRealtime userId={profile.id} />
 
-      {/* --------------------------------------------------------- PORTADA */}
       <section className="card relative isolate overflow-hidden">
         <div className="relative bg-teal-500 px-6 py-8 text-white sm:px-8">
           <MoaPattern variant="soft" />
           <div className="relative">
-            <p className="eyebrow text-sun-400">Mi workbook</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="eyebrow text-sun-400">Mi workbook</p>
+              <span className="chip bg-white/15 text-white">{WORKBOOK_ROUTE_LABELS[route]}</span>
+            </div>
             <h1 className="h-display mt-2 text-3xl sm:text-4xl">Hola, {firstName}</h1>
             <p className="mt-1 text-sm font-semibold text-white/75">
-              Route 1 · Teachers A2/B1 · 4 Reading Labs
+              {WORKBOOK_ROUTE_TITLES[route]} · 4 Reading Labs
             </p>
           </div>
         </div>
@@ -70,7 +84,6 @@ export default async function LabHome() {
         </div>
       </section>
 
-      {/* ---------------------------------------------- ATAJO AL DÍA ACTIVO */}
       {activeDay && (
         <Link
           href={`/lab/${activeDay.day}`}
@@ -87,7 +100,6 @@ export default async function LabHome() {
         </Link>
       )}
 
-      {/* -------------------------------------------------------- LOS 4 DÍAS */}
       <section>
         <div className="mb-4 flex items-center gap-3">
           <Squiggle className="h-6 w-20 shrink-0 text-coral-500" />
@@ -95,9 +107,10 @@ export default async function LabHome() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {WORKBOOK.map((d, i) => {
-            const p = pct(answered(d.day), totalFields(d.day));
+          {workbook.map((d, i) => {
+            const p = pct(answered(d.day), totalFields(d.day, route));
             const open = openDays.has(d.day);
+            const pending = pendingReview(d.day);
 
             const inner = (
               <>
@@ -124,7 +137,8 @@ export default async function LabHome() {
                     <p className="mt-2 text-sm italic leading-relaxed text-ink/60">{d.guidingQuestion}</p>
                     <ProgressBar className="mt-4" value={p} />
                     <p className="mt-2 text-xs font-semibold text-ink/50">
-                      {approved(d.day)}/{CHECKPOINTS_PER_DAY[d.day]} checkpoints firmados · {d.schedule}
+                      {approved(d.day)}/{cpPerDay[d.day]} checkpoints aprobados
+                      {pending ? ` · ${pending} en revisión` : ''} · {d.schedule}
                     </p>
                   </>
                 ) : (
@@ -164,7 +178,6 @@ export default async function LabHome() {
         </div>
       </section>
 
-      {/* ------------------------------------------------------------- NOTA */}
       <div className="flex items-start gap-4 rounded-3xl border-2 border-dashed border-teal-200 bg-white/60 p-5">
         <Burst className="mt-0.5 h-6 w-6 shrink-0 text-sun-500" />
         <p className="text-sm leading-relaxed text-ink/70">
