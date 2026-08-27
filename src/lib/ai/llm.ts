@@ -64,7 +64,7 @@ async function requestOnce({
   timeoutMs = 55_000,
 }: CallArgs & { maxTokens: number; temperature: number }): Promise<string> {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new LlmError('Falta la variable GEMINI_API_KEY en el servidor.');
+  if (!key) throw new LlmError('GEMINI_API_KEY is missing on the server.');
 
   const generationConfig: Record<string, unknown> = {
     temperature,
@@ -101,9 +101,9 @@ async function requestOnce({
     });
   } catch (e: any) {
     if (e?.name === 'AbortError') {
-      throw new LlmError('La IA tardó demasiado en responder. Inténtalo de nuevo.', undefined, true);
+      throw new LlmError('AI took too long to respond. Please try again.', undefined, true);
     }
-    throw new LlmError('No se pudo conectar con la IA.', String(e?.message ?? e), true);
+    throw new LlmError('Could not connect to AI.', String(e?.message ?? e), true);
   } finally {
     clearTimeout(timer);
     signal?.removeEventListener('abort', onAbort);
@@ -115,20 +115,20 @@ async function requestOnce({
     const retryable = res.status === 429 || res.status >= 500;
     const human =
       res.status === 401 || res.status === 403
-        ? 'La clave GEMINI_API_KEY no es válida o no tiene permisos.'
+        ? 'GEMINI_API_KEY is invalid or does not have permission.'
         : res.status === 429
-          ? 'La IA está saturada (límite de peticiones). Espera unos segundos.'
-          : `La IA devolvió un error ${res.status}.`;
+          ? 'AI is temporarily rate-limited. Please wait a few seconds and try again.'
+          : `AI returned error ${res.status}.`;
     throw new LlmError(human, detail, retryable);
   }
 
   const json: any = await res.json().catch(() => null);
-  if (!json) throw new LlmError('Respuesta ilegible de la IA.', undefined, true);
+  if (!json) throw new LlmError('Unreadable AI response.', undefined, true);
 
   const candidate = json.candidates?.[0];
   if (!candidate) {
-    const reason = json.promptFeedback?.blockReason ?? 'sin candidatos';
-    throw new LlmError(`La IA no generó respuesta (${reason}).`, JSON.stringify(json).slice(0, 400));
+    const reason = json.promptFeedback?.blockReason ?? 'no candidates';
+    throw new LlmError(`AI did not generate a response (${reason}).`, JSON.stringify(json).slice(0, 400));
   }
 
   const text: string = (candidate.content?.parts ?? [])
@@ -140,12 +140,12 @@ async function requestOnce({
 
   if (!text) {
     if (finish === 'MAX_TOKENS') {
-      throw new LlmError('La IA se quedó sin espacio antes de escribir la respuesta.', finish, true);
+      throw new LlmError('AI ran out of output space before completing the response.', finish, true);
     }
     if (finish === 'SAFETY' || finish === 'PROHIBITED_CONTENT') {
-      throw new LlmError('La IA bloqueó el contenido por sus filtros de seguridad.', finish);
+      throw new LlmError('AI blocked the content because of its safety filters.', finish);
     }
-    throw new LlmError(`La IA devolvió una respuesta vacía (${finish ?? 'desconocido'}).`, finish, true);
+    throw new LlmError(`AI returned an empty response (${finish ?? 'unknown'}).`, finish, true);
   }
 
   // Texto presente pero cortado: quien llama decide si repara o reintenta.
@@ -175,7 +175,7 @@ export async function callLLM(args: CallArgs): Promise<string> {
       await sleep(400 * 2 ** attempt);
     }
   }
-  throw lastError ?? new LlmError('La IA no respondió.');
+  throw lastError ?? new LlmError('AI did not respond.');
 }
 
 /**
@@ -208,11 +208,11 @@ export async function callLLMJson<T>(args: CallArgs & { schema: JsonSchema }): P
     const parsed = tryParse<T>(raw);
     if (parsed) return { data: parsed, raw };
 
-    lastError = new LlmError('La IA devolvió un formato que no se pudo interpretar.', raw.slice(0, 400), true);
+    lastError = new LlmError('AI returned a format that could not be interpreted.', raw.slice(0, 400), true);
     await sleep(300);
   }
 
-  throw lastError ?? new LlmError('La IA no devolvió un JSON válido.');
+  throw lastError ?? new LlmError('AI did not return valid JSON.');
 }
 
 /* ------------------------------------------------------------------------ */

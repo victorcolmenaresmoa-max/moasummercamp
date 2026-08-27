@@ -27,7 +27,7 @@ export function ReadingText({ title, blocks }: { title: string; blocks: ReadingB
             className="rounded-full px-3 py-1 text-xs font-extrabold text-teal-700 transition hover:bg-white disabled:opacity-35"
             disabled={size === 0}
             onClick={() => setSize((s) => Math.max(0, s - 1))}
-            aria-label="Reducir el texto"
+            aria-label="Decrease text size"
           >
             A−
           </button>
@@ -37,7 +37,7 @@ export function ReadingText({ title, blocks }: { title: string; blocks: ReadingB
             className="rounded-full px-3 py-1 text-xs font-extrabold text-teal-700 transition hover:bg-white disabled:opacity-35"
             disabled={size === SIZES.length - 1}
             onClick={() => setSize((s) => Math.min(SIZES.length - 1, s + 1))}
-            aria-label="Aumentar el texto"
+            aria-label="Increase text size"
           >
             A+
           </button>

@@ -3,9 +3,6 @@ import type { WorkbookRoute } from '@/lib/workbook';
 import type { ResponseRow } from '@/types/database';
 import { hasContent } from '@/lib/utils';
 
-/* ------------------------------------------------------------------ */
-/* 1. ASISTENTE DEL PARTICIPANTE                                      */
-/* ------------------------------------------------------------------ */
 export function tutorSystem(routeInput: WorkbookRoute | string | null | undefined) {
   const route = normalizeWorkbookRoute(routeInput);
   const level = route === 'b2_c1' ? 'B2/C1' : 'A2/B1';
@@ -19,6 +16,7 @@ The camp rule is: "Read first. Think second. Ask AI third."
 
 You MUST:
 ${languageRule}
+- Respond only in English.
 - Explain vocabulary, ideas and strategies.
 - Ask a question back when the teacher seems to be avoiding their own thinking.
 - For B2/C1, act as a critical-thinking partner: ask for evidence, assumptions, alternatives and implications.
@@ -48,77 +46,73 @@ export function tutorUserMessage(
     .join('\n\n');
 }
 
-/* ------------------------------------------------------------------ */
-/* 2. EVALUADOR PEDAGOGICO                                            */
-/* ------------------------------------------------------------------ */
 export function evaluatorSystem(routeInput: WorkbookRoute | string | null | undefined) {
   const route = normalizeWorkbookRoute(routeInput);
 
   if (route === 'b2_c1') {
-    return `Eres un formador de formadores (teacher trainer) senior de MOA Education.
-Evalúas el workbook completo de un docente participante del Reading Lab (Ruta 2, profesores B2/C1)
-del Immersive Summer Camp 2026.
+    return `You are a senior MOA Education teacher trainer.
+You evaluate the complete Reading Lab workbook of a teacher participant in Route 2 (B2/C1 teachers)
+from the Immersive Summer Camp 2026.
 
-Los cuatro días forman una progresión:
-  Día 1 IDENTIDAD PROFESIONAL - creencias, filosofía docente y liderazgo.
-  Día 2 CASOS EDUCATIVOS - diagnóstico, supuestos, evidencia, opciones y decisiones.
-  Día 3 PENSAMIENTO CRÍTICO - argumentos, calidad de evidencia y decisiones contextualizadas.
-  Día 4 RESEARCH-INFORMED TEACHING - investigación, aplicación al aula y crecimiento profesional.
+The four days form a progression:
+  Day 1 PROFESSIONAL IDENTITY - beliefs, teaching philosophy, and leadership.
+  Day 2 EDUCATIONAL CASES - diagnosis, assumptions, evidence, options, and decisions.
+  Day 3 CRITICAL THINKING - arguments, evidence quality, and contextualized decisions.
+  Day 4 RESEARCH-INFORMED TEACHING - research, classroom application, and professional growth.
 
-Criterios de calidad del workbook:
-  BÁSICO: responde y menciona información relevante.
-  ESPERADO: usa evidencia específica y explica su razonamiento.
-  EXCELENTE: usa evidencia, analiza causas/supuestos, considera alternativas e identifica implicaciones pedagógicas.
+Workbook quality criteria:
+  BASIC: answers the task and mentions relevant information.
+  EXPECTED: uses specific evidence and explains the reasoning.
+  EXCELLENT: uses evidence, analyzes causes/assumptions, considers alternatives, and identifies pedagogical implications.
 
-Evalúa sobre todo:
-  1. Uso de evidencia textual y calidad de la argumentación.
-  2. Capacidad para cuestionar supuestos y evaluar evidencia.
-  3. Toma de decisiones pedagógicas contextualizadas y justificadas.
-  4. Uso crítico de IA: pensamiento propio primero, IA como contrapunto.
-  5. Transferencia de la lectura a diseño docente y crecimiento profesional.
+Evaluate especially:
+  1. Use of textual evidence and quality of argumentation.
+  2. Ability to question assumptions and evaluate evidence.
+  3. Contextualized and justified pedagogical decision making.
+  4. Critical AI use: independent thinking first, AI as a counterpoint.
+  5. Transfer from reading to instructional design and professional growth.
 
-REGLAS:
-- Escribe en español neutro, para el moderador, en tono profesional y constructivo.
-- CADA fortaleza y CADA área de mejora debe citar evidencia real: menciona el día/parte y parafrasea o cita brevemente lo que el docente escribió. Nunca inventes evidencia.
-- Si un día está vacío o casi vacío, dilo explícitamente y baja las puntuaciones; no rellenes con supuestos.
-- El error del idioma no baja la valoración pedagógica salvo que impida comprender la idea.
-- No inventes nada: si falta información, dilo.
+RULES:
+- Write only in clear professional English for the moderator.
+- EVERY strength and EVERY growth area must cite real evidence: mention the day/part and briefly paraphrase or quote what the teacher wrote. Never invent evidence.
+- If a day is empty or nearly empty, say so explicitly and lower the scores; do not fill gaps with assumptions.
+- Language errors should not lower the pedagogical evaluation unless they make the idea impossible to understand.
+- Do not invent anything. If information is missing, say so.
 
-Devuelve el resultado siguiendo el esquema estructurado recibido. Entre 2 y 4 elementos en strengths y entre 2 y 4 en growth_areas. Las tres puntuaciones son enteros del 1 al 5. next_step es UNA sola acción concreta y observable.`;
+Return the result using the structured schema provided. Include 2-4 strengths and 2-4 growth areas. The three scores must be integers from 1 to 5. next_step must be ONE concrete, observable action.`;
   }
 
-  return `Eres un formador de formadores (teacher trainer) senior de MOA Education.
-Evalúas el workbook completo de un docente participante del Reading Lab (Ruta 1, profesores A2/B1)
-del Immersive Summer Camp 2026.
+  return `You are a senior MOA Education teacher trainer.
+You evaluate the complete Reading Lab workbook of a teacher participant in Route 1 (A2/B1 teachers)
+from the Immersive Summer Camp 2026.
 
-Los cuatro días forman una progresión:
-  Día 1 IDENTITY  - ¿Quién soy como docente MOA?
-  Día 2 CLARITY   - instrucciones claras: explicar vs. modelar vs. verificar comprensión.
-  Día 3 DECISION  - leer datos de desempeño y decidir con evidencia.
-  Día 4 GROWTH    - autoevaluación y una decisión de desarrollo profesional concreta.
+The four days form a progression:
+  Day 1 IDENTITY - Who am I as a MOA teacher?
+  Day 2 CLARITY - clear instructions: explain vs. model vs. check understanding.
+  Day 3 DECISION - read performance data and decide with evidence.
+  Day 4 GROWTH - self-evaluation and one concrete professional development decision.
 
-Criterios de la rúbrica del workbook:
-  BÁSICO     : responde la pregunta y menciona información del texto.
-  ESPERADO   : usa evidencia específica y explica su razonamiento.
-  EXCELENTE  : usa evidencia, explica causas y deriva una implicación pedagógica.
+Workbook rubric criteria:
+  BASIC: answers the question and mentions information from the text.
+  EXPECTED: uses specific evidence and explains the reasoning.
+  EXCELLENT: uses evidence, explains causes, and derives a pedagogical implication.
 
-Evalúa sobre todo:
-  1. Uso de evidencia.
-  2. Profundidad pedagógica.
-  3. Calidad de la decisión del Día 3 y del objetivo del Día 4.
-  4. Reflexión genuina vs. respuestas copiadas de la IA o genéricas.
+Evaluate especially:
+  1. Evidence use.
+  2. Pedagogical depth.
+  3. Quality of the Day 3 decision and Day 4 goal.
+  4. Genuine reflection vs. generic or AI-copied answers.
 
-REGLAS:
-- Escribe en español neutro, para el moderador, en tono profesional y constructivo.
-- CADA fortaleza y CADA área de mejora debe citar evidencia real del workbook. Nunca inventes evidencia.
-- Si un día está vacío o casi vacío, dilo explícitamente y baja las puntuaciones.
-- El error del idioma no baja la valoración pedagógica salvo que impida comprender la idea.
-- No inventes nada: si falta información, dilo.
+RULES:
+- Write only in clear professional English for the moderator.
+- EVERY strength and EVERY growth area must cite real workbook evidence. Never invent evidence.
+- If a day is empty or nearly empty, say so explicitly and lower the scores.
+- Language errors should not lower the pedagogical evaluation unless they make the idea impossible to understand.
+- Do not invent anything. If information is missing, say so.
 
-Devuelve el resultado siguiendo el esquema estructurado recibido. Entre 2 y 4 elementos en strengths y entre 2 y 4 en growth_areas. Las tres puntuaciones son enteros del 1 al 5. next_step es UNA sola acción concreta y observable.`;
+Return the result using the structured schema provided. Include 2-4 strengths and 2-4 growth areas. The three scores must be integers from 1 to 5. next_step must be ONE concrete, observable action.`;
 }
 
-/** Convierte las filas de responses en un documento legible para el modelo. */
 export function buildWorkbookTranscript(
   rows: ResponseRow[],
   teacherName: string,
@@ -135,18 +129,18 @@ export function buildWorkbookTranscript(
   }
 
   const lines: string[] = [
-    `DOCENTE: ${teacherName}`,
-    `SEDE: ${campus ?? 'no indicada'}`,
-    `RUTA: ${WORKBOOK_ROUTE_LABELS[route]}`,
-    `RESPUESTAS COMPLETADAS: ${rows.filter((r) => hasContent(r.value)).length}`,
+    `TEACHER: ${teacherName}`,
+    `CAMPUS: ${campus ?? 'not provided'}`,
+    `ROUTE: ${WORKBOOK_ROUTE_LABELS[route]}`,
+    `COMPLETED RESPONSES: ${rows.filter((r) => hasContent(r.value)).length}`,
     '',
   ];
 
   for (const day of workbook) {
     const items = byDay.get(day.day) ?? [];
-    lines.push(`===== DÍA ${day.day} — ${day.theme} (${day.title}) =====`);
+    lines.push(`===== DAY ${day.day} — ${day.theme} (${day.title}) =====`);
     if (!items.length) {
-      lines.push('(Sin respuestas registradas)\n');
+      lines.push('(No recorded responses)\n');
       continue;
     }
     const order = day.sections.flatMap((s) => s.fields.map((f) => f.key));
@@ -176,5 +170,5 @@ function renderValue(value: any): string {
 }
 
 export function evaluatorUserMessage(transcript: string, aiUsage: string) {
-  return `A continuación está el workbook completo del docente.\n\n${transcript}\n\n===== USO DEL ASISTENTE DE IA DURANTE EL CAMP =====\n${aiUsage || '(No usó el asistente integrado)'}\n\nGenera el reporte JSON siguiendo exactamente el formato indicado.`;
+  return `Below is the teacher's complete workbook.\n\n${transcript}\n\n===== AI ASSISTANT USE DURING THE CAMP =====\n${aiUsage || '(The built-in assistant was not used)'}\n\nGenerate the JSON report using exactly the required format. Write every text field in English.`;
 }

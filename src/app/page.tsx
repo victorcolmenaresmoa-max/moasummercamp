@@ -6,10 +6,10 @@ import { MoaLogo, MoaPattern, Squiggle, Burst, Arc, Quote } from '@/components/b
 export const dynamic = 'force-dynamic';
 
 const DAYS = [
-  { n: 1, theme: 'IDENTITY', q: '¿Quién soy como docente MOA?', tone: 'bg-sun-400 text-plum-500' },
-  { n: 2, theme: 'CLARITY', q: 'Explicar, modelar, verificar.', tone: 'bg-coral-500 text-white' },
-  { n: 3, theme: 'DECISION', q: 'Decidir con evidencia, no con intuición.', tone: 'bg-plum-500 text-white' },
-  { n: 4, theme: 'GROWTH', q: 'Mi próximo paso profesional.', tone: 'bg-teal-700 text-white' },
+  { n: 1, theme: 'IDENTITY', q: 'Who am I as a MOA teacher?', tone: 'bg-sun-400 text-plum-500' },
+  { n: 2, theme: 'CLARITY', q: 'Explain, model, check understanding.', tone: 'bg-coral-500 text-white' },
+  { n: 3, theme: 'DECISION', q: 'Decide with evidence, not intuition.', tone: 'bg-plum-500 text-white' },
+  { n: 4, theme: 'GROWTH', q: 'My next professional step.', tone: 'bg-teal-700 text-white' },
 ];
 
 export default async function Home() {
@@ -34,12 +34,12 @@ export default async function Home() {
             Reading&nbsp;Lab
           </h1>
           <p className="mt-4 max-w-xl text-lg font-semibold text-white/85">
-            Route 1 · Teachers A2/B1 · Cuatro laboratorios de lectura.
+            Route 1 · Teachers A2/B1 · Four reading labs.
           </p>
 
           <p className="mt-6 max-w-xl text-white/75">
-            Identity, Clarity, Decision y Growth. Tú eres el protagonista de la sesión;
-            el moderador acompaña y firma tus checkpoints.
+            Identity, Clarity, Decision and Growth. You are the main agent of the session;
+            your moderator supports you and signs off your checkpoints.
           </p>
 
           <div className="mt-9 inline-flex flex-wrap items-center gap-3 rounded-full bg-plum-500 px-6 py-3">
@@ -49,10 +49,10 @@ export default async function Home() {
 
           <div className="mt-10 flex flex-wrap gap-3">
             <Link href="/signup" className="btn-accent px-7 py-3 text-base shadow-pop">
-              Registrarme
+              Create account
             </Link>
             <Link href="/login" className="btn-onDark px-7 py-3 text-base">
-              Ya tengo cuenta
+              I already have an account
             </Link>
           </div>
         </div>
@@ -67,7 +67,7 @@ export default async function Home() {
       <section className="mx-auto max-w-5xl px-6 py-14">
         <div className="flex items-center gap-4">
           <Squiggle className="h-7 w-24 shrink-0 text-coral-500" />
-          <h2 className="h-display text-2xl text-teal-900">Tu ruta de 4 días</h2>
+          <h2 className="h-display text-2xl text-teal-900">Your 4-day route</h2>
         </div>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -88,9 +88,9 @@ export default async function Home() {
         <div className="mt-10 flex items-start gap-4 rounded-3xl border-2 border-dashed border-teal-200 bg-white/60 p-5">
           <Burst className="mt-0.5 h-7 w-7 shrink-0 text-sun-500" />
           <p className="text-sm leading-relaxed text-ink/70">
-            <strong className="text-teal-800">Cada día se abre en su sesión.</strong> Tu moderador activa
-            el laboratorio del día cuando empieza la clase. No podrás adelantar días desde casa:
-            el camp se vive aquí, con tu grupo.
+            <strong className="text-teal-800">Each day opens during its session.</strong> Your moderator activates
+            the day's lab when class begins. You cannot work ahead from home:
+            the camp happens here, with your group.
           </p>
         </div>
       </section>

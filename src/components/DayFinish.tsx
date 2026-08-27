@@ -41,19 +41,19 @@ export function DayFinish({
               <CheckIcon className="h-6 w-6" />
             </span>
             <h2 className="h-display mt-4 text-2xl text-teal-900">
-              ¡Day {day} completo!
+              Day {day} complete!
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-ink/65">
-              Terminaste {theme}. Avisa a tu moderador para que firme tus checkpoints.
-              El siguiente laboratorio se abrirá en su sesión.
+              You finished {theme}. Let your moderator know so they can review your checkpoints.
+              The next lab will open during its scheduled session.
             </p>
           </>
         ) : (
           <>
-            <h2 className="h-display text-2xl text-teal-900">Fin del Day {day}</h2>
+            <h2 className="h-display text-2xl text-teal-900">End of Day {day}</h2>
             <p className="mt-2 text-sm leading-relaxed text-ink/65">
-              Te faltan <strong className="text-teal-700">{total - done}</strong> campos por responder.
-              Puedes volver cuando quieras: todo queda guardado automáticamente.
+              You still have <strong className="text-teal-700">{total - done}</strong> fields to answer.
+              You can return anytime: everything is saved automatically.
             </p>
           </>
         )}
@@ -61,18 +61,18 @@ export function DayFinish({
         <div className="mx-auto mt-5 max-w-xs">
           <ProgressBar value={progress} />
           <p className="mt-2 text-xs font-bold text-ink/50">
-            {done} de {total} campos · {progress}%
+            {done} of {total} fields · {progress}%
           </p>
         </div>
 
         <Link href="/lab" prefetch className="btn-primary mt-7 px-7 py-3 text-base">
-          Volver a mi panel
+          Back to my dashboard
         </Link>
 
         <p className="mt-4 text-xs font-semibold text-ink/40">
           {day < 4
-            ? `El Day ${day + 1} lo abre tu moderador al empezar la próxima sesión.`
-            : 'Es el último laboratorio: tu moderador generará tu reporte final.'}
+            ? `Your moderator will open Day ${day + 1} when the next session begins.`
+            : 'This is the final lab: your moderator will generate your final report.'}
         </p>
       </div>
     </section>

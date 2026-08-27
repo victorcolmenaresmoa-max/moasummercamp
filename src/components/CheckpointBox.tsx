@@ -30,11 +30,11 @@ export function CheckpointBox({
       }`}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="h-display text-sm text-teal-800">CHECKPOINT {checkpoint.number} — el moderador revisa:</p>
-        {status === 'approved' && <Badge tone="success">Aprobado</Badge>}
-        {status === 'needs_work' && <Badge tone="danger">Por mejorar</Badge>}
-        {status === 'pending' && submitted && <Badge tone="warn">En revisión</Badge>}
-        {status === 'pending' && !submitted && <Badge tone="neutral">Listo para enviar</Badge>}
+        <p className="h-display text-sm text-teal-800">CHECKPOINT {checkpoint.number} — moderator review:</p>
+        {status === 'approved' && <Badge tone="success">Approved</Badge>}
+        {status === 'needs_work' && <Badge tone="danger">Needs work</Badge>}
+        {status === 'pending' && submitted && <Badge tone="warn">Under review</Badge>}
+        {status === 'pending' && !submitted && <Badge tone="neutral">Ready to submit</Badge>}
       </div>
 
       <ul className="mt-3 space-y-1.5 text-sm text-ink/75">
@@ -53,14 +53,14 @@ export function CheckpointBox({
 
       {submitted && row?.submitted_at && status === 'pending' && (
         <p className="mt-4 text-xs font-semibold text-ink/55">
-          Enviado a revisión · {new Date(row.submitted_at).toLocaleString('es-VE')}
+          Submitted for review · {new Date(row.submitted_at).toLocaleString('en-US')}
         </p>
       )}
 
       {row?.moderator_initials && (
         <p className="mt-4 text-xs font-semibold text-ink/55">
-          Iniciales: <strong className="text-teal-800">{row.moderator_initials}</strong>
-          {row.approved_at && ` · ${new Date(row.approved_at).toLocaleString('es-VE')}`}
+          Initials: <strong className="text-teal-800">{row.moderator_initials}</strong>
+          {row.approved_at && ` · ${new Date(row.approved_at).toLocaleString('en-US')}`}
         </p>
       )}
       {row?.comments && <p className="mt-1.5 text-xs italic leading-relaxed text-ink/70">“{row.comments}”</p>}

@@ -19,28 +19,28 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'No autenticado.' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
 
   const { data: me } = await supabase.from('profiles').select('id, role').eq('id', user.id).single();
-  if (!me) return NextResponse.json({ error: 'Perfil no encontrado.' }, { status: 403 });
+  if (!me) return NextResponse.json({ error: 'Profile not found.' }, { status: 403 });
 
   const body = await req.json().catch(() => ({}) as any);
   const targetId: string = body?.userId ?? user.id;
 
   const isStaff = me.role === 'moderator' || me.role === 'admin';
   if (!isStaff && targetId !== user.id) {
-    return NextResponse.json({ error: 'Sin permiso para evaluar a otro participante.' }, { status: 403 });
+    return NextResponse.json({ error: 'You do not have permission to evaluate another participant.' }, { status: 403 });
   }
 
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json(
-      { error: 'Falta SUPABASE_SERVICE_ROLE_KEY en el servidor. Anadela en las variables de entorno.' },
+      { error: 'SUPABASE_SERVICE_ROLE_KEY is missing on the server. Add it to the environment variables.' },
       { status: 500 },
     );
   }
   if (!process.env.GEMINI_API_KEY) {
     return NextResponse.json(
-      { error: 'Falta GEMINI_API_KEY en el servidor. Anadela en las variables de entorno.' },
+      { error: 'GEMINI_API_KEY is missing on the server. Add it to the environment variables.' },
       { status: 500 },
     );
   }
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     .select('id, full_name, campus, workbook_route')
     .eq('id', targetId)
     .single();
-  if (!target) return NextResponse.json({ error: 'Participante no encontrado.' }, { status: 404 });
+  if (!target) return NextResponse.json({ error: 'Participant not found.' }, { status: 404 });
 
   const [{ data: responses }, { data: interactions }] = await Promise.all([
     admin.from('responses').select('day, section_id, field_key, field_label, value').eq('user_id', targetId),
@@ -69,14 +69,14 @@ export async function POST(req: Request) {
   const filled = rows.filter((r) => hasContent(r.value));
   if (filled.length < 5) {
     return NextResponse.json(
-      { error: `El workbook solo tiene ${filled.length} respuesta(s) con contenido. Se necesitan al menos 5 para evaluar.` },
+      { error: `The workbook has only ${filled.length} response(s) with content. At least 5 are required for evaluation.` },
       { status: 400 },
     );
   }
 
   const transcript = buildWorkbookTranscript(rows, target.full_name, target.campus, target.workbook_route);
   const aiUsage = (interactions ?? [])
-    .map((i: any) => `Dia ${i.day ?? '?'}: ${String(i.prompt).slice(0, 180)}`)
+    .map((i: any) => `Day ${i.day ?? '?'}: ${String(i.prompt).slice(0, 180)}`)
     .join('\n');
 
   try {
@@ -112,7 +112,7 @@ export async function POST(req: Request) {
     if (error) {
       console.error('[ai/report] insert', error);
       return NextResponse.json(
-        { error: `El reporte se genero pero no se pudo guardar: ${error.message}` },
+        { error: `The report was generated but could not be saved: ${error.message}` },
         { status: 500 },
       );
     }
@@ -120,7 +120,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ report: saved });
   } catch (e: any) {
     console.error('[ai/report]', e?.message, e?.detail);
-    const message = e instanceof LlmError ? e.message : (e?.message ?? 'Error inesperado generando el reporte.');
+    const message = e instanceof LlmError ? e.message : (e?.message ?? 'Unexpected error while generating the report.');
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

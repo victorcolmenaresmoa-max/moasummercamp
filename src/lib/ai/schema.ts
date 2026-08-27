@@ -8,7 +8,7 @@ import type { JsonSchema } from './llm';
 export const REPORT_SCHEMA: JsonSchema = {
   type: 'object',
   properties: {
-    summary: { type: 'string', description: '3-5 frases con el retrato profesional del docente.' },
+    summary: { type: 'string', description: "3-5 sentences describing the teacher's professional profile." },
     strengths: {
       type: 'array',
       minItems: 2,
@@ -17,7 +17,7 @@ export const REPORT_SCHEMA: JsonSchema = {
         type: 'object',
         properties: {
           title: { type: 'string' },
-          evidence: { type: 'string', description: 'Día X, Parte Y: evidencia real citada.' },
+          evidence: { type: 'string', description: 'Day X, Part Y: real cited evidence.' },
         },
         required: ['title', 'evidence'],
       },
@@ -31,14 +31,14 @@ export const REPORT_SCHEMA: JsonSchema = {
         properties: {
           title: { type: 'string' },
           evidence: { type: 'string' },
-          suggestion: { type: 'string', description: 'Acción concreta y observable.' },
+          suggestion: { type: 'string', description: 'Concrete, observable action.' },
         },
         required: ['title', 'evidence', 'suggestion'],
       },
     },
-    evidence_use: { type: 'integer', description: 'Del 1 al 5.' },
-    pedagogical_depth: { type: 'integer', description: 'Del 1 al 5.' },
-    reflection_depth: { type: 'integer', description: 'Del 1 al 5.' },
+    evidence_use: { type: 'integer', description: 'From 1 to 5.' },
+    pedagogical_depth: { type: 'integer', description: 'From 1 to 5.' },
+    reflection_depth: { type: 'integer', description: 'From 1 to 5.' },
     next_step: { type: 'string' },
     moderator_notes: { type: 'string' },
   },
@@ -91,13 +91,13 @@ export function normalizeReport(input: any): ReportJson {
       .filter((item: any) => item.title || item.evidence);
 
   return {
-    summary: str(input?.summary, 'La IA no pudo redactar el resumen. Revisa el workbook manualmente.'),
+    summary: str(input?.summary, 'AI could not produce the summary. Review the workbook manually.'),
     strengths: list(input?.strengths, ['title', 'evidence']),
     growth_areas: list(input?.growth_areas, ['title', 'evidence', 'suggestion']),
     evidence_use: clamp(input?.evidence_use),
     pedagogical_depth: clamp(input?.pedagogical_depth),
     reflection_depth: clamp(input?.reflection_depth),
-    next_step: str(input?.next_step, 'Sin siguiente paso propuesto.'),
+    next_step: str(input?.next_step, 'No next step was proposed.'),
     moderator_notes: str(input?.moderator_notes) || undefined,
   };
 }

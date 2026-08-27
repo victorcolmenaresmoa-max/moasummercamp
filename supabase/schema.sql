@@ -38,7 +38,7 @@ create table if not exists public.profiles (
   updated_at    timestamptz not null default now()
 );
 
-comment on table public.profiles is 'Participantes (profesores) y staff (moderadores/admin) del camp.';
+comment on table public.profiles is 'Participants (teachers) and staff (moderators/admins) in the camp.';
 
 -- ---------------------------------------------------------------------------
 -- 3. RESPUESTAS DEL WORKBOOK
@@ -231,7 +231,7 @@ begin
     execute 'create policy "responses_rw_own" on public.responses
                for all using (user_id = auth.uid()) with check (user_id = auth.uid())';
   else
-    raise notice 'day_access existe: se conservan las politicas de bloqueo de dias.';
+    raise notice 'day_access exists: current day-locking policies are preserved.';
   end if;
 end $$;
 

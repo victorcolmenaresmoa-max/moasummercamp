@@ -72,7 +72,7 @@ export default async function DayPage({ params }: { params: { day: string } }) {
         className="inline-flex items-center gap-2 text-sm font-bold text-teal-600 transition hover:text-teal-800 no-print"
       >
         <ArrowLeftIcon className="h-4 w-4" />
-        Mi panel
+        My dashboard
       </Link>
 
       <header className="card relative isolate overflow-hidden">

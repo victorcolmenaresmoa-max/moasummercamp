@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/Badge';
 import { ModeratorRealtime } from '@/components/moderator/ModeratorRealtime';
 import { DayAccessControl } from '@/components/moderator/DayAccessControl';
 import { DeleteParticipantButton } from '@/components/moderator/DeleteParticipantButton';
+import { TelegramTestButton } from '@/components/moderator/TelegramTestButton';
 import { Squiggle } from '@/components/brand/Moa';
 import { pct, timeAgo } from '@/lib/utils';
 import type { Campus, DayAccessRow, ParticipantProgressRow, WorkbookRoute } from '@/types/database';
@@ -67,81 +68,82 @@ export default async function ModeratorDashboard({ searchParams }: { searchParam
     accessRows
       .filter((a) => a.campus === null && a.is_open)
       .map((a) => `D${a.day}`)
-      .join(' · ') || 'ninguno';
+      .join(' · ') || 'none';
 
   return (
     <div className="space-y-6">
       <ModeratorRealtime />
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <Kpi label="Participantes" value={String(rows.length)} tone="teal" />
-        <Kpi label="Activos (20 min)" value={String(active.length)} tone="moss" />
-        <Kpi label="Por revisar" value={String(totalPending)} tone="coral" />
+        <Kpi label="Participants" value={String(rows.length)} tone="teal" />
+        <Kpi label="Active (20 min)" value={String(active.length)} tone="moss" />
+        <Kpi label="To review" value={String(totalPending)} tone="coral" />
         <Kpi
-          label="Avance promedio"
+          label="Average progress"
           value={`${rows.length ? Math.round(rows.reduce((a, r) => a + overall(r), 0) / rows.length) : 0}%`}
           tone="sun"
         />
-        <Kpi label="Checkpoints aprobados" value={`${totalApproved}/${totalPossible}`} tone="teal" />
+        <Kpi label="Approved checkpoints" value={`${totalApproved}/${totalPossible}`} tone="teal" />
       </section>
 
       <DayAccessControl rows={accessRows} />
+      <TelegramTestButton />
 
       <form className="card flex flex-wrap items-end gap-3 p-5" method="get">
         <div>
-          <label className="label text-xs" htmlFor="f-campus">Sede</label>
+          <label className="label text-xs" htmlFor="f-campus">Campus</label>
           <select id="f-campus" name="campus" defaultValue={searchParams.campus ?? ''} className="input mt-1.5 w-44">
-            <option value="">Todas</option>
+            <option value="">All</option>
             <option value="merida">Mérida</option>
             <option value="el_vigia">El Vigía</option>
           </select>
         </div>
         <div>
-          <label className="label text-xs" htmlFor="f-route">Ruta</label>
+          <label className="label text-xs" htmlFor="f-route">Route</label>
           <select id="f-route" name="route" defaultValue={searchParams.route ?? ''} className="input mt-1.5 w-40">
-            <option value="">Ambas</option>
+            <option value="">Both</option>
             <option value="a2_b1">A2–B1</option>
             <option value="b2_c1">B2–C1</option>
           </select>
         </div>
         <div>
-          <label className="label text-xs" htmlFor="f-day">Día</label>
+          <label className="label text-xs" htmlFor="f-day">Day</label>
           <select id="f-day" name="day" defaultValue={searchParams.day ?? ''} className="input mt-1.5 w-36">
-            <option value="">Todo el camp</option>
+            <option value="">Entire camp</option>
             {WORKBOOK_DAY_NUMBERS.map((d) => <option key={d} value={d}>Day {d}</option>)}
           </select>
         </div>
         <div className="grow">
-          <label className="label text-xs" htmlFor="f-q">Buscar docente</label>
-          <input id="f-q" name="q" defaultValue={searchParams.q ?? ''} className="input mt-1.5" placeholder="Nombre…" />
+          <label className="label text-xs" htmlFor="f-q">Search participant</label>
+          <input id="f-q" name="q" defaultValue={searchParams.q ?? ''} className="input mt-1.5" placeholder="Name…" />
         </div>
-        <button className="btn-primary">Filtrar</button>
-        <Link href="/moderator" className="btn-ghost">Limpiar</Link>
+        <button className="btn-primary">Filter</button>
+        <Link href="/moderator" className="btn-ghost">Clear</Link>
       </form>
 
       <section className="card overflow-hidden">
         <div className="flex items-center gap-3 border-b-2 border-teal-50 px-5 py-4">
           <Squiggle className="h-5 w-16 shrink-0 text-coral-500" />
-          <h2 className="h-display text-lg text-teal-900">Participantes</h2>
-          <span className="ml-auto text-xs font-bold text-ink/45">Días abiertos: {openDaysLabel}</span>
+          <h2 className="h-display text-lg text-teal-900">Participants</h2>
+          <span className="ml-auto text-xs font-bold text-ink/45">Open days: {openDaysLabel}</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1120px] text-sm">
             <thead className="bg-teal-50/80 text-left">
               <tr className="eyebrow text-teal-700">
-                <th className="px-4 py-3">Docente</th>
-                <th className="px-4 py-3">Ruta</th>
-                <th className="px-4 py-3">Sede</th>
-                <th className="w-56 px-4 py-3">{dayFilter ? `Avance Day ${dayFilter}` : 'Avance total'}</th>
+                <th className="px-4 py-3">Participant</th>
+                <th className="px-4 py-3">Route</th>
+                <th className="px-4 py-3">Campus</th>
+                <th className="w-56 px-4 py-3">{dayFilter ? `Day progress ${dayFilter}` : 'Overall progress'}</th>
                 <th className="px-4 py-3">D1</th>
                 <th className="px-4 py-3">D2</th>
                 <th className="px-4 py-3">D3</th>
                 <th className="px-4 py-3">D4</th>
                 <th className="px-4 py-3">Checkpoints</th>
-                <th className="px-4 py-3">Por revisar</th>
-                <th className="px-4 py-3">Actividad</th>
-                <th className="px-4 py-3">Reporte IA</th>
+                <th className="px-4 py-3">To review</th>
+                <th className="px-4 py-3">Activity</th>
+                <th className="px-4 py-3">AI report</th>
                 <th className="px-4 py-3" />
                 {isAdmin && <th className="px-4 py-3" />}
               </tr>
@@ -178,9 +180,9 @@ export default async function ModeratorDashboard({ searchParams }: { searchParam
                       {r.checkpoints_pending_review > 0 ? <Badge tone="warn">{r.checkpoints_pending_review}</Badge> : <span className="text-ink/30">—</span>}
                     </td>
                     <td className="px-4 py-3 text-xs font-semibold text-ink/55">{timeAgo(r.last_activity)}</td>
-                    <td className="px-4 py-3">{r.last_report_at ? <Badge tone="success">Generado</Badge> : <Badge tone="warn">Pendiente</Badge>}</td>
+                    <td className="px-4 py-3">{r.last_report_at ? <Badge tone="success">Generated</Badge> : <Badge tone="warn">Pending</Badge>}</td>
                     <td className="px-4 py-3">
-                      <Link href={`/moderator/participant/${r.id}`} prefetch={false} className="btn-ghost btn-sm">Abrir</Link>
+                      <Link href={`/moderator/participant/${r.id}`} prefetch={false} className="btn-ghost btn-sm">Open</Link>
                     </td>
                     {isAdmin && (
                       <td className="px-4 py-3"><DeleteParticipantButton participantId={r.id} participantName={r.full_name} /></td>
@@ -191,7 +193,7 @@ export default async function ModeratorDashboard({ searchParams }: { searchParam
               {!rows.length && (
                 <tr>
                   <td colSpan={isAdmin ? 14 : 13} className="px-4 py-14 text-center font-semibold text-ink/45">
-                    No hay participantes con esos filtros.
+                    No participants match these filters.
                   </td>
                 </tr>
               )}
@@ -202,7 +204,7 @@ export default async function ModeratorDashboard({ searchParams }: { searchParam
 
       {isAdmin && (
         <p className="text-xs font-semibold text-ink/40">
-          Como administrador puedes eliminar cuentas de participantes. Borra su workbook completo y libera el correo para volver a registrarse.
+          As an administrator, you can delete participant accounts. This removes the entire workbook and frees the email address so it can be registered again.
         </p>
       )}
     </div>

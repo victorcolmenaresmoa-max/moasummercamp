@@ -68,9 +68,9 @@ export function ParticipantDayOverride({
   return (
     <section className="card p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="h-display text-lg text-teal-900">Acceso a los días de este docente</h2>
+        <h2 className="h-display text-lg text-teal-900">This participant's day access</h2>
         <span className="text-xs font-semibold text-ink/45">
-          Las excepciones mandan sobre la regla general
+          Individual exceptions override the general rule
         </span>
       </div>
 
@@ -99,7 +99,7 @@ export function ParticipantDayOverride({
               </div>
 
               <p className="mt-1 text-[11px] font-semibold text-ink/45">
-                {ov ? (ov.is_open ? 'Excepción: abierto' : 'Excepción: cerrado') : 'Sigue la regla general'}
+                {ov ? (ov.is_open ? 'Exception: open' : 'Exception: closed') : 'Follows general rule'}
               </p>
 
               <div className="mt-2.5 flex gap-1.5">
@@ -109,14 +109,14 @@ export function ParticipantDayOverride({
                   onClick={() => setOverride(day, !open)}
                   className={`${open ? 'btn-ghost' : 'btn-primary'} btn-sm grow py-1.5`}
                 >
-                  {busy === day ? '…' : open ? 'Cerrar' : 'Abrir'}
+                  {busy === day ? '…' : open ? 'Close' : 'Open'}
                 </button>
                 {ov && (
                   <button
                     type="button"
                     disabled={busy === day}
                     onClick={() => setOverride(day, null)}
-                    title="Quitar la excepción y volver a la regla general"
+                    title="Remove exception and return to the general rule"
                     className="btn-ghost btn-sm py-1.5"
                   >
                     ↺

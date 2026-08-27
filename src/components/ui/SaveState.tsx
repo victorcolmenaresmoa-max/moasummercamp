@@ -5,10 +5,10 @@ import { cn } from '@/lib/utils';
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'locked';
 
 const MAP: Record<Exclude<SaveStatus, 'idle'>, [string, string]> = {
-  saving: ['Guardando…', 'bg-teal-50 text-teal-600'],
-  saved: ['Guardado', 'bg-moss-100 text-moss-600'],
-  error: ['No se pudo guardar', 'bg-coral-100 text-coral-700'],
-  locked: ['Día cerrado', 'bg-plum-50 text-plum-400'],
+  saving: ['Saving…', 'bg-teal-50 text-teal-600'],
+  saved: ['Saved', 'bg-moss-100 text-moss-600'],
+  error: ['Could not save', 'bg-coral-100 text-coral-700'],
+  locked: ['Day locked', 'bg-plum-50 text-plum-400'],
 };
 
 export function SaveState({ status }: { status: SaveStatus }) {

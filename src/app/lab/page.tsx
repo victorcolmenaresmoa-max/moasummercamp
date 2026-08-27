@@ -62,10 +62,10 @@ export default async function LabHome() {
           <MoaPattern variant="soft" />
           <div className="relative">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="eyebrow text-sun-400">Mi workbook</p>
+              <p className="eyebrow text-sun-400">My workbook</p>
               <span className="chip bg-white/15 text-white">{WORKBOOK_ROUTE_LABELS[route]}</span>
             </div>
-            <h1 className="h-display mt-2 text-3xl sm:text-4xl">Hola, {firstName}</h1>
+            <h1 className="h-display mt-2 text-3xl sm:text-4xl">Hello, {firstName}</h1>
             <p className="mt-1 text-sm font-semibold text-white/75">
               {WORKBOOK_ROUTE_TITLES[route]} · 4 Reading Labs
             </p>
@@ -74,12 +74,12 @@ export default async function LabHome() {
 
         <div className="px-6 py-5 sm:px-8">
           <div className="flex items-center justify-between gap-4 text-sm">
-            <span className="font-extrabold text-teal-800">Progreso total del camp</span>
+            <span className="font-extrabold text-teal-800">Overall camp progress</span>
             <span className="h-display text-2xl text-teal-600">{globalPct}%</span>
           </div>
           <ProgressBar className="mt-2" value={globalPct} />
           <p className="mt-2 text-xs font-semibold text-ink/50">
-            {totalDone} de {totalAll} campos completados
+            {totalDone} of {totalAll} fields completed
           </p>
         </div>
       </section>
@@ -91,7 +91,7 @@ export default async function LabHome() {
           className="group flex items-center justify-between gap-4 rounded-3xl bg-sun-400 px-6 py-4 text-plum-500 shadow-pop transition hover:-translate-y-0.5"
         >
           <span>
-            <span className="eyebrow block opacity-70">Continuar donde lo dejaste</span>
+            <span className="eyebrow block opacity-70">Continue where you left off</span>
             <span className="h-display mt-0.5 block text-lg">
               Day {activeDay.day} · {activeDay.theme}
             </span>
@@ -103,7 +103,7 @@ export default async function LabHome() {
       <section>
         <div className="mb-4 flex items-center gap-3">
           <Squiggle className="h-6 w-20 shrink-0 text-coral-500" />
-          <h2 className="h-display text-xl text-teal-900">Mis 4 días</h2>
+          <h2 className="h-display text-xl text-teal-900">My 4 days</h2>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -127,7 +127,7 @@ export default async function LabHome() {
                     <Badge tone={p === 100 ? 'success' : p > 0 ? 'accent' : 'neutral'}>{p}%</Badge>
                   ) : (
                     <Badge tone="locked">
-                      <LockIcon className="h-3 w-3" /> Cerrado
+                      <LockIcon className="h-3 w-3" /> Locked
                     </Badge>
                   )}
                 </div>
@@ -137,14 +137,14 @@ export default async function LabHome() {
                     <p className="mt-2 text-sm italic leading-relaxed text-ink/60">{d.guidingQuestion}</p>
                     <ProgressBar className="mt-4" value={p} />
                     <p className="mt-2 text-xs font-semibold text-ink/50">
-                      {approved(d.day)}/{cpPerDay[d.day]} checkpoints aprobados
-                      {pending ? ` · ${pending} en revisión` : ''} · {d.schedule}
+                      {approved(d.day)}/{cpPerDay[d.day]} checkpoints approved
+                      {pending ? ` · ${pending} under review` : ''} · {d.schedule}
                     </p>
                   </>
                 ) : (
                   <p className="mt-3 flex items-start gap-2 rounded-2xl bg-plum-50/70 px-3 py-2.5 text-xs font-semibold leading-relaxed text-plum-400">
                     <LockIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                    Tu moderador abrirá este laboratorio cuando empiece la sesión.
+                    Your moderator will open this lab when the session begins.
                   </p>
                 )}
 
@@ -181,9 +181,9 @@ export default async function LabHome() {
       <div className="flex items-start gap-4 rounded-3xl border-2 border-dashed border-teal-200 bg-white/60 p-5">
         <Burst className="mt-0.5 h-6 w-6 shrink-0 text-sun-500" />
         <p className="text-sm leading-relaxed text-ink/70">
-          <strong className="text-teal-800">Un día a la vez.</strong> Cada laboratorio se abre en su
-          sesión presencial. Al terminar el día vuelves aquí y esperas al siguiente con tu grupo.
-          Esta pantalla se actualiza sola: no hace falta refrescar.
+          <strong className="text-teal-800">One day at a time.</strong> Each lab opens during its
+          in-person session. When the day ends, return here and wait for the next one with your group.
+          This screen updates automatically; no manual refresh is needed.
         </p>
       </div>
     </div>

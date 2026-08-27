@@ -19,7 +19,7 @@ type CallArgs = {
  */
 export async function callLLM({ system, user, maxTokens = 2000, temperature = 0.3 }: CallArgs): Promise<string> {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error('Falta GEMINI_API_KEY');
+  if (!key) throw new Error('GEMINI_API_KEY is missing');
 
   const res = await fetch(`${API_BASE}/${MODEL}:generateContent`, {
     method: 'POST',
@@ -48,8 +48,8 @@ export async function callLLM({ system, user, maxTokens = 2000, temperature = 0.
   const candidate = json.candidates?.[0];
   if (!candidate) {
     // Gemini bloquea la respuesta completa: promptFeedback explica por que.
-    const reason = json.promptFeedback?.blockReason ?? 'sin candidatos';
-    throw new Error(`La IA no devolvio respuesta (${reason})`);
+    const reason = json.promptFeedback?.blockReason ?? 'no candidates';
+    throw new Error(`AI did not return a response (${reason})`);
   }
 
   const text = (candidate.content?.parts ?? [])
@@ -57,7 +57,7 @@ export async function callLLM({ system, user, maxTokens = 2000, temperature = 0.
     .join('\n')
     .trim();
 
-  if (!text) throw new Error(`Respuesta vacia (finishReason: ${candidate.finishReason ?? 'desconocido'})`);
+  if (!text) throw new Error(`Empty response (finishReason: ${candidate.finishReason ?? 'unknown'})`);
   return text;
 }
 
@@ -66,6 +66,6 @@ export function parseJson<T>(text: string): T {
   const cleaned = text.replace(/^```(?:json)?/gm, '').replace(/```$/gm, '').trim();
   const start = cleaned.indexOf('{');
   const end = cleaned.lastIndexOf('}');
-  if (start === -1 || end === -1) throw new Error('La IA no devolvió JSON | Intenta nuevamente');
+  if (start === -1 || end === -1) throw new Error('AI did not return JSON');
   return JSON.parse(cleaned.slice(start, end + 1)) as T;
 }

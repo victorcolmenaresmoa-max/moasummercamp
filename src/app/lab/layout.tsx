@@ -10,9 +10,9 @@ export default async function LabLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-30 border-b border-teal-900/5 bg-paper/85 backdrop-blur-md no-print">
+      <header className="sticky top-0 z-30 border-b border-teal-900/5 bg-paper/95 no-print">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-3">
-          <Link href="/lab" aria-label="Ir a mi workbook">
+          <Link href="/lab" aria-label="Go to my workbook">
             <MoaLogo />
           </Link>
 
@@ -20,12 +20,12 @@ export default async function LabLayout({ children }: { children: React.ReactNod
             <div className="hidden text-right sm:block">
               <p className="text-sm font-extrabold leading-tight text-teal-800">{profile.full_name}</p>
               <p className="text-xs font-semibold text-ink/50">
-                {profile.campus ? CAMPUS_LABELS[profile.campus] : 'Sin sede'}
+                {profile.campus ? CAMPUS_LABELS[profile.campus] : 'No campus'}
               </p>
             </div>
             {isStaff && (
               <Link href="/moderator" className="btn-ghost btn-sm">
-                Panel moderador
+                Moderator panel
               </Link>
             )}
             <SignOutButton />

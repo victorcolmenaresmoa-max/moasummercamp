@@ -11,7 +11,7 @@ import { WORKBOOK_DAY_NUMBERS } from '@/lib/workbook';
 type Scope = { key: string; label: string; campus: Campus | null };
 
 const SCOPES: Scope[] = [
-  { key: 'all', label: 'Todas las sedes', campus: null },
+  { key: 'all', label: 'All campuses', campus: null },
   { key: 'merida', label: 'Mérida', campus: 'merida' },
   { key: 'el_vigia', label: 'El Vigía', campus: 'el_vigia' },
 ];
@@ -69,7 +69,7 @@ export function DayAccessControl({ rows }: { rows: DayAccessRow[] }) {
     });
 
     if (error) {
-      setError(`No se pudo cambiar el Day ${day}: ${error.message}`);
+      setError(`Could not change Day ${day}: ${error.message}`);
       applyOptimistic({ campus: scope.campus, day, is_open: !next }); // revertir
     }
     setBusy(null);
@@ -82,8 +82,8 @@ export function DayAccessControl({ rows }: { rows: DayAccessRow[] }) {
         <div className="flex items-center gap-3">
           <Squiggle className="h-5 w-16 shrink-0 text-sun-400" />
           <div>
-            <p className="eyebrow text-sun-400">Control del camp</p>
-            <h2 className="h-display text-xl">Apertura de días</h2>
+            <p className="eyebrow text-sun-400">Camp control</p>
+            <h2 className="h-display text-xl">Day access</h2>
           </div>
         </div>
 
@@ -106,8 +106,8 @@ export function DayAccessControl({ rows }: { rows: DayAccessRow[] }) {
 
       <div className="px-6 py-5">
         <p className="text-sm leading-relaxed text-ink/65">
-          Solo los días abiertos son visibles y editables para los docentes. El cambio llega a sus
-          pantallas al instante, sin que refresquen.
+          Only open days are visible and editable for participants. Changes appear on their
+          screens immediately without a manual refresh.
         </p>
 
         {error && (
@@ -136,13 +136,13 @@ export function DayAccessControl({ rows }: { rows: DayAccessRow[] }) {
                     className={`chip ${open ? 'bg-moss-500 text-white' : 'bg-plum-50 text-plum-400'}`}
                   >
                     {open ? <UnlockIcon className="h-3 w-3" /> : <LockIcon className="h-3 w-3" />}
-                    {open ? 'Abierto' : 'Cerrado'}
+                    {open ? 'Open' : 'Closed'}
                   </span>
                 </div>
 
                 {inherited && (
                   <p className="mt-2 text-[11px] font-semibold text-ink/45">
-                    Heredado de la regla global
+                    Inherited from global rule
                   </p>
                 )}
 
@@ -152,7 +152,7 @@ export function DayAccessControl({ rows }: { rows: DayAccessRow[] }) {
                   onClick={() => toggle(day, !open)}
                   className={`mt-4 w-full ${open ? 'btn-ghost' : 'btn-primary'} btn-sm py-2`}
                 >
-                  {busy === day ? '…' : open ? 'Cerrar día' : 'Abrir día'}
+                  {busy === day ? '…' : open ? 'Close day' : 'Open day'}
                 </button>
               </div>
             );
@@ -160,8 +160,8 @@ export function DayAccessControl({ rows }: { rows: DayAccessRow[] }) {
         </div>
 
         <p className="mt-5 text-xs font-semibold text-ink/45">
-          Consejo: abre el día justo al empezar la sesión y ciérralo al terminar. Si un docente
-          necesita ponerse al día, ábrele el día desde su ficha individual.
+          Tip: open the day when the session begins and close it when it ends. If a participant
+          needs to catch up, open that day from their individual profile.
         </p>
       </div>
     </section>

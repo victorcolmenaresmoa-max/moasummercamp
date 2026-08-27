@@ -25,7 +25,7 @@ export function DeleteParticipantButton({
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
 
-  const normalize = (s: string) => s.trim().replace(/\s+/g, ' ').toLocaleLowerCase('es');
+  const normalize = (s: string) => s.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en');
   const matches = normalize(typed) === normalize(participantName);
 
   function close() {
@@ -44,11 +44,11 @@ export function DeleteParticipantButton({
         body: JSON.stringify({ userId: participantId, confirmName: typed }),
       });
       const json = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(json?.error ?? 'No se pudo eliminar la cuenta.');
+      if (!res.ok) throw new Error(json?.error ?? 'The account could not be deleted.');
       close();
       startTransition(() => router.refresh());
     } catch (e: any) {
-      setError(e?.message ?? 'Error de conexión.');
+      setError(e?.message ?? 'Connection error.');
     } finally {
       setBusy(false);
     }
@@ -59,12 +59,12 @@ export function DeleteParticipantButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        title={`Eliminar la cuenta de ${participantName}`}
-        aria-label={`Eliminar la cuenta de ${participantName}`}
+        title={`Delete the account for ${participantName}`}
+        aria-label={`Delete the account for ${participantName}`}
         className="btn btn-sm border-2 border-coral-100 bg-white py-1.5 text-coral-600 hover:border-coral-200 hover:bg-coral-50"
       >
         <TrashIcon className="h-3.5 w-3.5" />
-        Eliminar
+        Delete
       </button>
     );
   }
@@ -73,17 +73,17 @@ export function DeleteParticipantButton({
     <div
       role="dialog"
       aria-modal="false"
-      aria-label={`Confirmar eliminación de ${participantName}`}
+      aria-label={`Confirm deletion of ${participantName}`}
       className="w-72 animate-pop-in rounded-2xl border-2 border-coral-200 bg-coral-50 p-3.5 text-left"
     >
-      <p className="text-xs font-extrabold text-coral-700">Eliminar a {participantName}</p>
+      <p className="text-xs font-extrabold text-coral-700">Delete {participantName}</p>
       <p className="mt-1 text-[11px] font-semibold leading-relaxed text-ink/65">
-        Se borra su cuenta y todo su workbook. No se puede deshacer. Podrá registrarse otra vez con
-        el mismo correo.
+        This deletes the account and the entire workbook. It cannot be undone. The participant can register again with
+        the same email address.
       </p>
 
       <label className="mt-2.5 block text-[11px] font-bold text-ink/70" htmlFor={`del-${participantId}`}>
-        Escribe <span className="font-extrabold text-coral-700">{participantName}</span> para confirmar:
+        Type <span className="font-extrabold text-coral-700">{participantName}</span> to confirm:
       </label>
       <input
         id={`del-${participantId}`}
@@ -107,10 +107,10 @@ export function DeleteParticipantButton({
           onClick={remove}
           className="btn btn-sm grow bg-coral-500 py-1.5 text-white hover:bg-coral-600"
         >
-          {busy ? 'Eliminando…' : 'Eliminar'}
+          {busy ? 'Deleting…' : 'Delete'}
         </button>
         <button type="button" disabled={busy} onClick={close} className="btn-ghost btn-sm py-1.5">
-          Cancelar
+          Cancel
         </button>
       </div>
     </div>

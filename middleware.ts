@@ -21,9 +21,9 @@ export async function middleware(request: NextRequest) {
     },
   );
 
-  // Refresca la sesión en cada request (obligatorio con SSR).
+  // Only protected/auth pages pass through middleware. API routes authenticate
+  // themselves, so they avoid a second unnecessary auth network request.
   const { data: { user } } = await supabase.auth.getUser();
-
   const path = request.nextUrl.pathname;
   const isProtected = path.startsWith('/lab') || path.startsWith('/moderator');
 
@@ -45,5 +45,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: ['/lab/:path*', '/moderator/:path*', '/login', '/signup'],
 };

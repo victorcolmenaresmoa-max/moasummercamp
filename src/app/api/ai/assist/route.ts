@@ -10,11 +10,11 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
   const { prompt, extra = '', day, sectionId } = await req.json();
   if (!prompt || typeof prompt !== 'string') {
-    return NextResponse.json({ error: 'Prompt requerido' }, { status: 400 });
+    return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
   }
 
   const { data: profile } = await supabase.from('profiles').select('workbook_route').eq('id', user.id).single();
@@ -38,6 +38,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ text });
   } catch (e: any) {
     console.error('[ai/assist]', e);
-    return NextResponse.json({ error: e.message ?? 'Error del asistente' }, { status: 500 });
+    return NextResponse.json({ error: e.message ?? 'Assistant error' }, { status: 500 });
   }
 }

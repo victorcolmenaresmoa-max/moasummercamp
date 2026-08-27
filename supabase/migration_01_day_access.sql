@@ -28,7 +28,7 @@ create table if not exists public.day_access (
 );
 
 comment on table public.day_access is
-  'Que dias del Reading Lab estan abiertos. Lo controla el moderador desde el panel.';
+  'Which Reading Lab days are open. Staff control this from the moderator panel.';
 
 -- Una sola fila por (sede, dia). Dos indices porque NULL no colisiona consigo mismo.
 create unique index if not exists day_access_campus_day_idx
@@ -51,7 +51,7 @@ create table if not exists public.participant_day_access (
 );
 
 comment on table public.participant_day_access is
-  'Excepciones individuales: mandan por encima de day_access.';
+  'Individual exceptions override day_access rules.';
 
 -- ---------------------------------------------------------------------------
 -- 3. SEMILLA: Dia 1 abierto, Dias 2-4 cerrados (reglas globales)
@@ -136,10 +136,10 @@ declare
   result public.day_access;
 begin
   if not public.is_staff() then
-    raise exception 'Solo el staff puede abrir o cerrar dias.' using errcode = '42501';
+    raise exception 'Only staff can open or close days.' using errcode = '42501';
   end if;
   if p_day < 1 or p_day > 4 then
-    raise exception 'Dia invalido: %', p_day;
+    raise exception 'Invalid day: %', p_day;
   end if;
 
   update public.day_access

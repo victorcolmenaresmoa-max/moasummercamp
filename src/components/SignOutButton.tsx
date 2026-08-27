@@ -20,7 +20,7 @@ export function SignOutButton({ tone = 'dark' }: { tone?: 'dark' | 'light' }) {
         router.refresh();
       }}
     >
-      {busy ? '…' : 'Salir'}
+      {busy ? '…' : 'Sign out'}
     </button>
   );
 }

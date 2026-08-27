@@ -36,19 +36,19 @@ export async function POST(req: Request) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'No autenticado.' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
 
   const { data: me } = await supabase.from('profiles').select('id, role').eq('id', user.id).single();
   if (!me || me.role !== 'admin') {
     return NextResponse.json(
-      { error: 'Solo un administrador puede eliminar cuentas.' },
+      { error: 'Only an administrator can delete accounts.' },
       { status: 403 },
     );
   }
 
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json(
-      { error: 'Falta SUPABASE_SERVICE_ROLE_KEY en el servidor.' },
+      { error: 'SUPABASE_SERVICE_ROLE_KEY is missing on the server.' },
       { status: 500 },
     );
   }
@@ -57,11 +57,11 @@ export async function POST(req: Request) {
   const targetId: string | undefined = body?.userId;
   const confirmName: string = String(body?.confirmName ?? '');
 
-  if (!targetId) return NextResponse.json({ error: 'Falta el identificador.' }, { status: 400 });
+  if (!targetId) return NextResponse.json({ error: 'Participant ID is missing.' }, { status: 400 });
 
   // No puedes borrarte a ti mismo: te quedarias sin acceso al panel.
   if (targetId === me.id) {
-    return NextResponse.json({ error: 'No puedes eliminar tu propia cuenta.' }, { status: 400 });
+    return NextResponse.json({ error: 'You cannot delete your own account.' }, { status: 400 });
   }
 
   const admin = createAdminClient();
@@ -71,23 +71,23 @@ export async function POST(req: Request) {
     .select('id, full_name, role')
     .eq('id', targetId)
     .single();
-  if (!target) return NextResponse.json({ error: 'Esa cuenta ya no existe.' }, { status: 404 });
+  if (!target) return NextResponse.json({ error: 'That account no longer exists.' }, { status: 404 });
 
   // Proteccion del staff: primero hay que bajarlo a participante.
   if (target.role !== 'participant') {
     return NextResponse.json(
       {
-        error: `${target.full_name} es ${target.role}. Cambia su rol a participante antes de eliminarlo.`,
+        error: `${target.full_name} is ${target.role}. Change the role to participant before deleting the account.`,
       },
       { status: 400 },
     );
   }
 
   // El nombre tecleado debe coincidir: evita borrar la fila equivocada.
-  const normalize = (s: string) => s.trim().replace(/\s+/g, ' ').toLocaleLowerCase('es');
+  const normalize = (s: string) => s.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en');
   if (normalize(confirmName) !== normalize(target.full_name)) {
     return NextResponse.json(
-      { error: 'El nombre escrito no coincide. No se ha eliminado nada.' },
+      { error: 'The typed name does not match. Nothing was deleted.' },
       { status: 400 },
     );
   }
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
   const { error } = await admin.auth.admin.deleteUser(targetId);
   if (error) {
     console.error('[admin/delete-participant]', error);
-    return NextResponse.json({ error: `No se pudo eliminar: ${error.message}` }, { status: 500 });
+    return NextResponse.json({ error: `Could not delete the account: ${error.message}` }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, deleted: target.full_name });

@@ -61,14 +61,14 @@ export function CheckpointApproval({ participantId, moderatorId, day, checkpoint
       <div className="flex items-center justify-between gap-3">
         <p className="h-display text-sm text-teal-800">CHECKPOINT {checkpoint.number}</p>
         <span className={`chip ${chip}`}>
-          {row?.status === 'approved' ? 'Aprobado' : row?.status === 'needs_work' ? 'Por mejorar' : row?.submitted_at ? 'En revisión' : 'Pendiente'}
+          {row?.status === 'approved' ? 'Approved' : row?.status === 'needs_work' ? 'Needs work' : row?.submitted_at ? 'Under review' : 'Pending'}
         </span>
       </div>
 
       {row?.submitted_at && (
         <p className="mt-3 text-xs font-semibold text-teal-700">
-          Enviado por el participante: {new Date(row.submitted_at).toLocaleString('es-VE')}
-          {row.submission_count > 1 ? ` · envío #${row.submission_count}` : ''}
+          Submitted by participant: {new Date(row.submitted_at).toLocaleString('en-US')}
+          {row.submission_count > 1 ? ` · submission #${row.submission_count}` : ''}
         </p>
       )}
 
@@ -90,14 +90,14 @@ export function CheckpointApproval({ participantId, moderatorId, day, checkpoint
         <input
           className="input"
           placeholder="Iniciales"
-          aria-label="Iniciales del moderador"
+          aria-label="Moderator initials"
           value={initials}
           onChange={(e) => setInitials(e.target.value.toUpperCase())}
           maxLength={6}
         />
         <input
           className="input"
-          placeholder="Comentario para el docente (opcional)"
+          placeholder="Comment for the participant (optional)"
           aria-label="Comentario"
           value={comments}
           onChange={(e) => setComments(e.target.value)}
@@ -109,10 +109,10 @@ export function CheckpointApproval({ participantId, moderatorId, day, checkpoint
       <div className="mt-4 flex flex-wrap gap-2">
         <button className="btn-primary btn-sm py-2" disabled={!!saving} onClick={() => save('approved')}>
           <CheckIcon className="h-3.5 w-3.5" />
-          {saving === 'approved' ? 'Guardando…' : 'Aprobar'}
+          {saving === 'approved' ? 'Saving…' : 'Approve'}
         </button>
         <button className="btn-ghost btn-sm py-2" disabled={!!saving} onClick={() => save('needs_work')}>
-          {saving === 'needs_work' ? 'Guardando…' : 'Por mejorar'}
+          {saving === 'needs_work' ? 'Saving…' : 'Needs work'}
         </button>
       </div>
     </div>

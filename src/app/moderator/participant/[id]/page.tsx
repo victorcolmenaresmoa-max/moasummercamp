@@ -94,7 +94,7 @@ export default async function ParticipantDetail({
         className="inline-flex items-center gap-2 text-sm font-bold text-teal-600 transition hover:text-teal-800"
       >
         <ArrowLeftIcon className="h-4 w-4" />
-        Volver al panel
+        Back to dashboard
       </Link>
 
       <header className="card p-6">
@@ -103,11 +103,11 @@ export default async function ParticipantDetail({
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="h-display text-2xl text-teal-900">{participant.full_name}</h1>
               <Badge tone="accent">{WORKBOOK_ROUTE_LABELS[route]}</Badge>
-              {pendingReview > 0 && <Badge tone="warn">{pendingReview} por revisar</Badge>}
+              {pendingReview > 0 && <Badge tone="warn">{pendingReview} to review</Badge>}
             </div>
             <p className="mt-1 text-sm font-semibold text-ink/55">
-              {participant.campus ? CAMPUS_LABELS[participant.campus] : 'Sin sede'} · {participant.email} ·
-              última actividad {timeAgo(lastActivity)}
+              {participant.campus ? CAMPUS_LABELS[participant.campus] : 'No campus'} · {participant.email} ·
+              last activity {timeAgo(lastActivity)}
             </p>
           </div>
 
@@ -135,7 +135,7 @@ export default async function ParticipantDetail({
 
       <ReportPanel participantId={participant.id} participantName={participant.full_name} report={report} />
 
-      <nav className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1" aria-label="Días">
+      <nav className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1" aria-label="Days">
         {workbook.map((d) => (
           <Link
             key={d.day}
@@ -180,9 +180,9 @@ export default async function ParticipantDetail({
       ))}
 
       <section className="card p-6">
-        <h2 className="h-display text-lg text-teal-900">Uso del asistente de IA (últimas 10)</h2>
+        <h2 className="h-display text-lg text-teal-900">AI assistant usage (last 10)</h2>
         {!interactions?.length ? (
-          <p className="mt-2 text-sm font-semibold text-ink/50">No usó el asistente integrado.</p>
+          <p className="mt-2 text-sm font-semibold text-ink/50">The participant did not use the built-in assistant.</p>
         ) : (
           <ul className="mt-4 space-y-2.5">
             {(interactions as AiInteractionRow[]).map((i) => (

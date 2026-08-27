@@ -3,21 +3,25 @@
 import { useRealtime } from '@/lib/useRealtime';
 
 /**
- * Panel del moderador en vivo.
- * Un unico canal para todas las tablas y refrescos agrupados: con 25 docentes
- * escribiendo a la vez el panel se actualiza sin parpadear ni saturar la red.
+ * Keeps moderator screens current without forcing a full refresh for every
+ * participant keystroke/autosave.
+ *
+ * Dashboard: checkpoint/access/report events only.
+ * Participant detail: also watches that participant's responses, heavily
+ * debounced so typing never causes continuous page reloads.
  */
 export function ModeratorRealtime({ userId }: { userId?: string }) {
   const filter = userId ? `user_id=eq.${userId}` : undefined;
 
   useRealtime({
     channel: `moa-mod-${userId ?? 'all'}`,
-    debounce: userId ? 400 : 900,
+    debounce: userId ? 2500 : 1200,
     tables: [
-      { table: 'responses', filter },
+      ...(userId ? [{ table: 'responses', filter } as const] : []),
       { table: 'checkpoints', filter },
       { table: 'ai_reports', filter },
       { table: 'day_access' },
+      ...(userId ? [{ table: 'participant_day_access', filter } as const] : []),
     ],
   });
 

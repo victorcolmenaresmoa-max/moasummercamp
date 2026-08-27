@@ -30,14 +30,14 @@ export function CheckpointSubmitButton({
       const json = await response.json().catch(() => null);
       if (!response.ok) {
         setFailed(true);
-        setMessage(json?.error ?? 'No se pudo enviar el checkpoint.');
+        setMessage(json?.error ?? 'The checkpoint could not be submitted.');
         return;
       }
-      setMessage(json?.warning ?? 'Checkpoint enviado a revisión.');
+      setMessage(json?.warning ?? 'Checkpoint submitted for review.');
       router.refresh();
     } catch {
       setFailed(true);
-      setMessage('Error de conexión. Intenta de nuevo.');
+      setMessage('Connection error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -46,7 +46,7 @@ export function CheckpointSubmitButton({
   return (
     <div className="mt-4">
       <button type="button" className="btn-primary btn-sm" disabled={loading} onClick={submit}>
-        {loading ? 'Enviando…' : resubmit ? 'Volver a enviar a revisión' : 'Llegué a este checkpoint · Enviar a revisión'}
+        {loading ? 'Sending…' : resubmit ? 'Resubmit for review' : 'I reached this checkpoint · Submit for review'}
       </button>
       {message && (
         <p className={`mt-2 text-xs font-semibold ${failed ? 'text-coral-600' : 'text-teal-700'}`}>{message}</p>

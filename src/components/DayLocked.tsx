@@ -17,7 +17,7 @@ export function DayLocked({ day }: { day: Day }) {
         className="inline-flex items-center gap-2 text-sm font-bold text-teal-600 transition hover:text-teal-800"
       >
         <ArrowLeftIcon className="h-4 w-4" />
-        Mi panel
+        My dashboard
       </Link>
 
       <section className="card relative isolate overflow-hidden animate-pop-in">
@@ -31,14 +31,14 @@ export function DayLocked({ day }: { day: Day }) {
             <p className="eyebrow mt-6 text-sun-400">
               Day {day.day} · {day.theme}
             </p>
-            <h1 className="h-display mt-2 text-3xl">Este laboratorio aún no está abierto</h1>
+            <h1 className="h-display mt-2 text-3xl">This lab is not open yet</h1>
             <p className="mt-4 leading-relaxed text-white/75">
-              Tu moderador lo activará cuando empiece la sesión de este día. Así el camp se vive
-              en el aula, con tu grupo, y nadie llega con las respuestas preparadas de casa.
+              Your moderator will activate it when this day's session begins. This keeps the camp
+              in the classroom, with your group, and prevents anyone from arriving with answers prepared at home.
             </p>
 
             <Link href="/lab" className="btn-accent mt-8 px-7 py-3 text-base shadow-pop">
-              Volver a mi panel
+              Back to my dashboard
             </Link>
           </div>
           <Gear className="pointer-events-none absolute -bottom-8 -left-8 h-28 w-28 text-white/5" />
@@ -47,7 +47,7 @@ export function DayLocked({ day }: { day: Day }) {
         <div className="flex items-center gap-3 px-6 py-4 sm:px-10">
           <Squiggle className="h-5 w-16 shrink-0 text-coral-500" />
           <p className="text-xs font-semibold text-ink/55">
-            Mientras esperas, puedes repasar los días que ya completaste desde tu panel.
+            While you wait, you can review the days you have already completed from your dashboard.
           </p>
         </div>
       </section>

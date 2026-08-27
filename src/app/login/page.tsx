@@ -25,7 +25,7 @@ function LoginForm() {
     if (error) {
       setError(
         error.message === 'Invalid login credentials'
-          ? 'Correo o contraseña incorrectos.'
+          ? 'Incorrect email or password.'
           : error.message,
       );
       setLoading(false);
@@ -40,20 +40,20 @@ function LoginForm() {
 
   return (
     <AuthShell
-      title="Entrar"
-      subtitle="Tu workbook te espera donde lo dejaste."
+      title="Sign in"
+      subtitle="Your workbook is waiting where you left it."
       footer={
         <>
-          ¿Primera vez?{' '}
+          First time here?{' '}
           <Link href="/signup" className="font-bold text-teal-600 underline-offset-4 hover:underline">
-            Regístrate aquí
+            Create an account
           </Link>
         </>
       }
     >
       <form onSubmit={onSubmit} className="space-y-5">
         <div>
-          <label className="label" htmlFor="email">Correo</label>
+          <label className="label" htmlFor="email">Email</label>
           <input
             id="email"
             className="input mt-1.5"
@@ -65,7 +65,7 @@ function LoginForm() {
           />
         </div>
         <div>
-          <label className="label" htmlFor="password">Contraseña</label>
+          <label className="label" htmlFor="password">Password</label>
           <input
             id="password"
             className="input mt-1.5"
@@ -80,7 +80,7 @@ function LoginForm() {
         <FormError>{error}</FormError>
 
         <button className="btn-primary w-full py-3 text-base" disabled={loading}>
-          {loading ? 'Entrando…' : 'Entrar'}
+          {loading ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
     </AuthShell>

@@ -3,7 +3,7 @@ import { hasContent } from '@/lib/utils';
 /** Renderiza el jsonb guardado en cualquiera de sus formas. */
 export function AnswerValue({ value }: { value: any }) {
   if (!hasContent(value)) {
-    return <p className="text-sm font-semibold italic text-ink/30">Sin respuesta</p>;
+    return <p className="text-sm font-semibold italic text-ink/30">No response</p>;
   }
 
   if (typeof value?.text === 'string') {

@@ -190,7 +190,7 @@ function TableEditor({
                         <textarea
                           rows={2}
                           disabled={readOnly}
-                          aria-label={`${field.columns[c]} fila ${r + 1}`}
+                          aria-label={`${field.columns[c]} row ${r + 1}`}
                           className="w-full resize-y border-0 bg-transparent px-3.5 py-2.5 text-sm outline-none transition focus:bg-teal-50/60 disabled:cursor-not-allowed"
                           value={cell}
                           onChange={(e) => update(r, c, e.target.value)}
@@ -211,7 +211,7 @@ function TableEditor({
           className="w-full border-t-2 border-teal-50 bg-white py-2.5 text-xs font-extrabold text-teal-600 transition hover:bg-teal-50"
           onClick={() => setValue({ rows: [...rows, field.columns.map(() => '')] })}
         >
-          + Añadir fila
+          + Add row
         </button>
       )}
     </div>

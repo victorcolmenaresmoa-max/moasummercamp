@@ -28,7 +28,7 @@ export default function SignupPage() {
     setError(null);
 
     if (form.code.trim().toUpperCase() !== CAMP_CODE.toUpperCase()) {
-      setError('El código del camp no es correcto. Pídeselo a tu moderador.');
+      setError('The camp code is incorrect. Ask your moderator for the correct code.');
       return;
     }
 
@@ -57,20 +57,20 @@ export default function SignupPage() {
 
   return (
     <AuthShell
-      title="Mi registro"
-      subtitle="Selecciona tu sede y la ruta asignada por tu moderador."
+      title="Create my account"
+      subtitle="Select your campus and the route assigned by your moderator."
       footer={
         <>
-          ¿Ya tienes cuenta?{' '}
+          Already have an account?{' '}
           <Link href="/login" className="font-bold text-teal-600 underline-offset-4 hover:underline">
-            Entrar
+            Sign in
           </Link>
         </>
       }
     >
       <form onSubmit={onSubmit} className="space-y-5">
         <div>
-          <label className="label" htmlFor="name">Mi nombre</label>
+          <label className="label" htmlFor="name">My name</label>
           <input
             id="name"
             className="input mt-1.5"
@@ -82,7 +82,7 @@ export default function SignupPage() {
         </div>
 
         <div>
-          <label className="label">Mi sede</label>
+          <label className="label">My campus</label>
           <div className="mt-1.5 grid grid-cols-2 gap-2">
             {[
               { v: 'merida', l: 'Mérida' },
@@ -106,8 +106,8 @@ export default function SignupPage() {
         </div>
 
         <div>
-          <label className="label">Mi ruta / workbook</label>
-          <p className="mt-1 text-xs font-semibold text-ink/45">Elige la ruta que te indicó tu moderador.</p>
+          <label className="label">My route / workbook</label>
+          <p className="mt-1 text-xs font-semibold text-ink/45">Choose the route assigned by your moderator.</p>
           <div className="mt-2 grid grid-cols-2 gap-2">
             {[
               { v: 'a2_b1', l: 'A2–B1', sub: 'Route 1' },
@@ -132,7 +132,7 @@ export default function SignupPage() {
         </div>
 
         <div>
-          <label className="label" htmlFor="email">Correo</label>
+          <label className="label" htmlFor="email">Email</label>
           <input
             id="email"
             className="input mt-1.5"
@@ -145,7 +145,7 @@ export default function SignupPage() {
         </div>
 
         <div>
-          <label className="label" htmlFor="pw">Contraseña <span className="font-normal text-ink/45">(mínimo 6 caracteres)</span></label>
+          <label className="label" htmlFor="pw">Password <span className="font-normal text-ink/45">(minimum 6 characters)</span></label>
           <input
             id="pw"
             className="input mt-1.5"
@@ -159,7 +159,7 @@ export default function SignupPage() {
         </div>
 
         <div>
-          <label className="label" htmlFor="code">Código del camp</label>
+          <label className="label" htmlFor="code">Camp code</label>
           <input
             id="code"
             className="input mt-1.5 font-bold uppercase tracking-widest"
@@ -173,7 +173,7 @@ export default function SignupPage() {
         <FormError>{error}</FormError>
 
         <button className="btn-accent w-full py-3 text-base shadow-pop" disabled={loading}>
-          {loading ? 'Creando…' : 'Empezar el camp'}
+          {loading ? 'Creating…' : 'Start the camp'}
         </button>
       </form>
     </AuthShell>

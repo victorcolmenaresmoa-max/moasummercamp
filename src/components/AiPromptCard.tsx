@@ -38,13 +38,13 @@ export function AiPromptCard({ field, day, sectionId }: Props) {
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.text) {
         setFailed(true);
-        setAnswer(json?.error ?? 'El asistente no está disponible ahora mismo.');
+        setAnswer(json?.error ?? 'The assistant is not available right now.');
       } else {
         setAnswer(json.text);
       }
     } catch {
       setFailed(true);
-      setAnswer('Error de conexión con el asistente.');
+      setAnswer('Connection error with the assistant.');
     } finally {
       setLoading(false);
     }
@@ -83,10 +83,10 @@ export function AiPromptCard({ field, day, sectionId }: Props) {
         <button type="button" className="btn-ghost btn-sm" onClick={copy}>
           {copied ? (
             <>
-              <CheckIcon className="h-3.5 w-3.5" /> Copiado
+              <CheckIcon className="h-3.5 w-3.5" /> Copied
             </>
           ) : (
-            'Copiar prompt'
+            'Copy prompt'
           )}
         </button>
         <button
@@ -95,27 +95,27 @@ export function AiPromptCard({ field, day, sectionId }: Props) {
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
         >
-          {open ? 'Cerrar asistente' : 'Usar asistente aquí'}
+          {open ? 'Close assistant' : 'Use assistant here'}
         </button>
       </div>
 
       {open && (
         <div className="mt-4 space-y-3 rounded-2xl border-2 border-plum-100 bg-white p-4 animate-fade-up">
           <label className="label text-xs" htmlFor={`${field.key}-extra`}>
-            Añade tu contexto (palabras, ideas, tu borrador…)
+            Add your context (words, ideas, your draft…)
           </label>
           <textarea
             id={`${field.key}-extra`}
             className="input"
             rows={3}
             value={extra}
-            placeholder="Ej.: disappointed, overnight, growth mindset…"
+            placeholder="E.g.: disappointed, overnight, growth mindset…"
             onChange={(e) => setExtra(e.target.value)}
           />
 
           <button type="button" className="btn-accent btn-sm" disabled={loading} onClick={run}>
             <SparkIcon className="h-3.5 w-3.5" />
-            {loading ? 'Pensando…' : 'Enviar'}
+            {loading ? 'Thinking…' : 'Send'}
           </button>
 
           {loading && <div className="skeleton h-20 w-full" />}
@@ -131,7 +131,7 @@ export function AiPromptCard({ field, day, sectionId }: Props) {
           )}
 
           <p className="text-[11px] font-semibold text-ink/45">
-            Esta consulta queda registrada para tu moderador. La IA no escribe tus respuestas por ti.
+            This request is logged for your moderator. AI does not write your workbook answers for you.
           </p>
         </div>
       )}
