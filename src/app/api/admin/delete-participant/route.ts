@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getVerifiedUserId } from '@/lib/supabase/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { AI_EVIDENCE_BUCKET, parseExternalAiEvidence } from '@/lib/ai/evidence';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,7 @@ export const dynamic = 'force-dynamic';
  *           ├── ai_reports          (on delete cascade)
  *           ├── ai_interactions     (on delete cascade)
  *           └── participant_day_access (on delete cascade)
+ *   storage/ai-evidence/<user_id>/   (deleted explicitly before account removal)
  *
  * Como el correo deja de existir en auth.users, esa misma persona puede
  * volver a registrarse con el mismo correo y empezar de cero.
@@ -89,6 +91,20 @@ export async function POST(req: Request) {
       { error: 'The typed name does not match. Nothing was deleted.' },
       { status: 400 },
     );
+  }
+
+  // Remove private screenshot evidence before the database rows disappear in cascade.
+  const { data: interactionRows } = await admin.from('ai_interactions').select('response').eq('user_id', targetId);
+  const evidencePaths = Array.from(
+    new Set(
+      (interactionRows ?? [])
+        .map((row) => parseExternalAiEvidence(row.response)?.imagePath)
+        .filter((path): path is string => Boolean(path)),
+    ),
+  );
+  if (evidencePaths.length) {
+    const { error: storageError } = await admin.storage.from(AI_EVIDENCE_BUCKET).remove(evidencePaths);
+    if (storageError) console.error('[admin/delete-participant:evidence-cleanup]', storageError);
   }
 
   const { error } = await admin.auth.admin.deleteUser(targetId);

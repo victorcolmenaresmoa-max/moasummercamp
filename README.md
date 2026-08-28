@@ -89,9 +89,15 @@ The route selector is in `src/lib/workbook/index.ts` and sign-up is in `src/app/
 
 - `POST /api/checkpoints/submit` — saves a checkpoint submission and sends the Telegram alert.
 - `POST /api/telegram/test` — staff-only Telegram connection test.
-- `POST /api/ai/assist` — participant AI assistant.
+- `GET/POST /api/ai/evidence` — records external AI prompts plus text/screenshot evidence; no participant LLM call is made by the app.
 - `POST /api/ai/report` — staff pedagogical report generator.
 
 ## Language policy
 
 All participant-facing and moderator-facing interface text, validation messages, checkpoint content, and AI instructions are in English. Proper names such as campus/city names are preserved as names.
+
+## External AI evidence flow
+
+Participant AI prompts are no longer sent to Gemini from the Reading Lab. The prompt card now opens Google Gemini in a new tab and lets the teacher record every prompt used. For each prompt, the teacher can save the returned answer as text, a screenshot, or both. Screenshot files are compressed in the browser and stored privately in the Supabase Storage bucket `ai-evidence`; the bucket is created automatically by the server on the first screenshot upload. Moderators receive temporary signed preview links in the participant review screen.
+
+The participant lab also uses browser-level deterrents against copying instructional text and requests `notranslate` behavior from supported browser translation tools. These controls cannot make third-party extensions, developer tools, screenshots, or external devices technically impossible; they are classroom safeguards rather than a security boundary.

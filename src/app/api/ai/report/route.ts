@@ -6,6 +6,7 @@ import { callLLMJson, LlmError, MODEL } from '@/lib/ai/llm';
 import { REPORT_SCHEMA, normalizeReport, type ReportJson } from '@/lib/ai/schema';
 import { evaluatorSystem, buildWorkbookTranscript, evaluatorUserMessage } from '@/lib/ai/prompts';
 import { hasContent } from '@/lib/utils';
+import { parseExternalAiEvidence } from '@/lib/ai/evidence';
 import type { ResponseRow } from '@/types/database';
 
 export const runtime = 'nodejs';
@@ -60,10 +61,10 @@ export async function POST(req: Request) {
     admin.from('responses').select('day, section_id, field_key, field_label, value').eq('user_id', targetId),
     admin
       .from('ai_interactions')
-      .select('day, prompt')
+      .select('day, prompt, response')
       .eq('user_id', targetId)
       .order('created_at', { ascending: true })
-      .limit(40),
+      .limit(100),
   ]);
 
   const rows = (responses ?? []) as ResponseRow[];
@@ -77,7 +78,20 @@ export async function POST(req: Request) {
 
   const transcript = buildWorkbookTranscript(rows, target.full_name, target.campus, target.workbook_route);
   const aiUsage = (interactions ?? [])
-    .map((i: any) => `Day ${i.day ?? '?'}: ${String(i.prompt).slice(0, 180)}`)
+    .map((i: any) => {
+      const evidence = parseExternalAiEvidence(i.response);
+      const responseEvidence = evidence
+        ? [
+            evidence.text ? `response text: ${evidence.text.slice(0, 220)}` : '',
+            evidence.imagePath ? 'screenshot evidence attached' : '',
+          ]
+            .filter(Boolean)
+            .join(' | ')
+        : i.response
+          ? `legacy in-app response: ${String(i.response).slice(0, 220)}`
+          : 'no response evidence';
+      return `Day ${i.day ?? '?'} | prompt: ${String(i.prompt).slice(0, 220)} | ${responseEvidence}`;
+    })
     .join('\n');
 
   try {

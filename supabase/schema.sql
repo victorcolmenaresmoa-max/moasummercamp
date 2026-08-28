@@ -112,7 +112,7 @@ create table if not exists public.ai_reports (
 create index if not exists ai_reports_user_idx on public.ai_reports (user_id, generated_at desc);
 
 -- ---------------------------------------------------------------------------
--- 6. REGISTRO DE USO DE IA POR EL PARTICIPANTE (asistente dentro de la app)
+-- 6. REGISTRO DE USO DE IA POR EL PARTICIPANTE (evidencia de IA externa)
 --    Permite al moderador ver COMO se uso la IA ("Read first. Think second.")
 -- ---------------------------------------------------------------------------
 create table if not exists public.ai_interactions (

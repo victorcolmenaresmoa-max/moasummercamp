@@ -121,3 +121,21 @@
   content-visibility: auto;
   contain-intrinsic-size: auto 620px;
 }
+
+/* Classroom mode: participants can type/select inside form controls, but the
+   instructional content itself is not normally selectable or copyable. */
+.protected-workbook,
+.protected-workbook * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.protected-workbook input,
+.protected-workbook textarea,
+.protected-workbook select,
+.protected-workbook [contenteditable='true'],
+.protected-workbook [data-allow-copy='true'],
+.protected-workbook [data-allow-copy='true'] * {
+  -webkit-user-select: text;
+  user-select: text;
+}

@@ -29,7 +29,7 @@ export type Field =
   | { type: 'matrix'; key: string; label: string; rows: string[]; options: string[] }
   /** Casillas multiples */
   | { type: 'checkgroup'; key: string; label: string; options: string[] }
-  /** Prompt sugerido del workbook: se puede copiar o ejecutar dentro de la app */
+  /** Prompt sugerido del workbook: se copia a una IA externa y se registra la evidencia de uso */
   | { type: 'ai_prompt'; key: string; prompt: string; note?: string }
   /** Bloque informativo (situaciones, recordatorios) */
   | { type: 'info'; key: string; title?: string; text: string };

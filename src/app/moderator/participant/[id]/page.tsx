@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireStaff } from '@/lib/supabase/session';
 import {
   getWorkbook,
@@ -19,6 +20,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Badge } from '@/components/ui/Badge';
 import { ArrowLeftIcon } from '@/components/ui/Icons';
 import { hasContent, pct, timeAgo } from '@/lib/utils';
+import { AI_EVIDENCE_BUCKET, parseExternalAiEvidence } from '@/lib/ai/evidence';
 import type {
   AiInteractionRow,
   CheckpointRow,
@@ -66,10 +68,10 @@ export default async function ParticipantDetail({
       .limit(1),
     supabase
       .from('ai_interactions')
-      .select('id, day, prompt, created_at')
+      .select('id, day, section_id, prompt, response, created_at')
       .eq('user_id', params.id)
       .order('created_at', { ascending: false })
-      .limit(10),
+      .limit(100),
     supabase.from('day_access').select('*'),
     supabase.from('participant_day_access').select('*').eq('user_id', params.id),
   ]);
@@ -77,6 +79,28 @@ export default async function ParticipantDetail({
   const answers = new Map((responses ?? []).map((r) => [r.field_key, r.value]));
   const cps = new Map((checkpoints ?? []).map((c: CheckpointRow) => [`${c.day}-${c.checkpoint_number}`, c]));
   const report = ((reports ?? [])[0] ?? null) as AiReportDisplay | null;
+
+  const interactionRows = (interactions ?? []) as Pick<
+    AiInteractionRow,
+    'id' | 'day' | 'section_id' | 'prompt' | 'response' | 'created_at'
+  >[];
+  const parsedInteractions = interactionRows.map((row) => ({ ...row, evidence: parseExternalAiEvidence(row.response) }));
+
+  const imageUrlByPath = new Map<string, string>();
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const paths = Array.from(
+      new Set(parsedInteractions.map((row) => row.evidence?.imagePath).filter((path): path is string => Boolean(path))),
+    );
+    if (paths.length) {
+      const admin = createAdminClient();
+      await Promise.all(
+        paths.map(async (path) => {
+          const { data } = await admin.storage.from(AI_EVIDENCE_BUCKET).createSignedUrl(path, 60 * 60);
+          if (data?.signedUrl) imageUrlByPath.set(path, data.signedUrl);
+        }),
+      );
+    }
+  }
   const activeDay = Number(searchParams.day ?? 1) || 1;
   const day = workbook.find((d) => d.day === activeDay) ?? workbook[0];
 
@@ -200,20 +224,74 @@ export default async function ParticipantDetail({
       ))}
 
       <section className="card p-6">
-        <h2 className="h-display text-lg text-teal-900">AI assistant usage (last 10)</h2>
-        {!interactions?.length ? (
-          <p className="mt-2 text-sm font-semibold text-ink/50">The participant did not use the built-in assistant.</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="h-display text-lg text-teal-900">AI use evidence</h2>
+            <p className="mt-1 text-xs font-semibold text-ink/45">Recorded prompts and response evidence.</p>
+          </div>
+          {parsedInteractions.length > 0 && (
+            <Badge tone="accent">{parsedInteractions.length} records</Badge>
+          )}
+        </div>
+
+        {!parsedInteractions.length ? (
+          <p className="mt-3 text-sm font-semibold text-ink/50">The participant has not saved AI evidence yet.</p>
         ) : (
-          <ul className="mt-4 space-y-2.5">
-            {(interactions as Pick<AiInteractionRow, 'id' | 'day' | 'prompt' | 'created_at'>[]).map((i) => (
-              <li key={i.id} className="rounded-2xl bg-teal-50/70 p-3.5">
-                <p className="eyebrow text-teal-600">
-                  Day {i.day ?? '?'} · {timeAgo(i.created_at)}
-                </p>
-                <p className="mt-1.5 text-sm leading-relaxed text-ink/80">{i.prompt.slice(0, 300)}</p>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-4 space-y-3">
+            {parsedInteractions.map((i) => {
+              const imageUrl = i.evidence?.imagePath ? imageUrlByPath.get(i.evidence.imagePath) : null;
+              return (
+                <article key={i.id} className="rounded-2xl border border-teal-100 bg-teal-50/45 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="eyebrow text-teal-600">
+                      Day {i.day ?? '?'} · {timeAgo(i.created_at)}
+                    </p>
+                    <span className="chip bg-white text-plum-500">{i.evidence?.provider ?? 'Legacy AI record'}</span>
+                  </div>
+
+                  <div className="mt-3">
+                    <p className="eyebrow text-ink/40">Prompt used</p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-ink/80">{i.prompt}</p>
+                  </div>
+
+                  {i.evidence?.text && (
+                    <div className="mt-3 rounded-2xl bg-white p-3.5">
+                      <p className="eyebrow text-plum-400">AI response</p>
+                      <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-ink/75">
+                        {i.evidence.text}
+                      </p>
+                    </div>
+                  )}
+
+                  {!i.evidence && i.response && (
+                    <div className="mt-3 rounded-2xl bg-white p-3.5">
+                      <p className="eyebrow text-plum-400">Previous in-app response</p>
+                      <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-ink/75">
+                        {i.response}
+                      </p>
+                    </div>
+                  )}
+
+                  {imageUrl && (
+                    <a href={imageUrl} target="_blank" rel="noreferrer" className="mt-3 block">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imageUrl}
+                        alt="AI response screenshot evidence"
+                        className="max-h-[520px] w-full rounded-2xl border border-teal-100 bg-white object-contain"
+                      />
+                    </a>
+                  )}
+
+                  {i.evidence?.imagePath && !imageUrl && (
+                    <p className="mt-3 rounded-xl bg-sun-100 px-3 py-2 text-xs font-bold text-sun-700">
+                      A screenshot was saved, but a preview link could not be generated.
+                    </p>
+                  )}
+                </article>
+              );
+            })}
+          </div>
         )}
       </section>
     </div>

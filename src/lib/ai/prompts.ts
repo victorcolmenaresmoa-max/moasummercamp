@@ -170,5 +170,5 @@ function renderValue(value: any): string {
 }
 
 export function evaluatorUserMessage(transcript: string, aiUsage: string) {
-  return `Below is the teacher's complete workbook.\n\n${transcript}\n\n===== AI ASSISTANT USE DURING THE CAMP =====\n${aiUsage || '(The built-in assistant was not used)'}\n\nGenerate the JSON report using exactly the required format. Write every text field in English.`;
+  return `Below is the teacher's complete workbook.\n\n${transcript}\n\n===== RECORDED AI USE DURING THE CAMP =====\n${aiUsage || '(No external AI-use evidence was recorded)'}\n\nGenerate the JSON report using exactly the required format. Write every text field in English.`;
 }

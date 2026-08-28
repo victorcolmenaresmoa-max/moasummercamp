@@ -1,8 +1,14 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { requireProfile } from '@/lib/supabase/session';
 import { SignOutButton } from '@/components/SignOutButton';
 import { MoaLogo } from '@/components/brand/Moa';
 import { CAMPUS_LABELS } from '@/lib/workbook';
+import { LabContentProtection } from '@/components/LabContentProtection';
+
+export const metadata: Metadata = {
+  other: { google: 'notranslate' },
+};
 
 export default async function LabLayout({ children }: { children: React.ReactNode }) {
   const profile = await requireProfile();
@@ -10,6 +16,7 @@ export default async function LabLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen flex-col">
+      <LabContentProtection enabled={!isStaff} />
       <header className="sticky top-0 z-30 border-b border-teal-900/5 bg-paper/95 no-print">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-3">
           <Link href="/lab" aria-label="Go to my workbook">
@@ -33,7 +40,12 @@ export default async function LabLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl grow px-5 py-8">{children}</main>
+      <main
+        className={`mx-auto w-full max-w-5xl grow px-5 py-8 ${!isStaff ? 'protected-workbook notranslate' : ''}`}
+        translate={!isStaff ? 'no' : undefined}
+      >
+        {children}
+      </main>
 
       <footer className="pb-10 pt-4 text-center no-print">
         <p className="text-xs font-semibold text-ink/40">

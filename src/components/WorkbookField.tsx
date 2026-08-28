@@ -37,7 +37,7 @@ export const WorkbookField = memo(function WorkbookField(props: Props) {
   }
 
   if (field.type === 'ai_prompt') {
-    return <AiPromptCard field={field} day={props.day} sectionId={props.sectionId} userId={props.userId} />;
+    return <AiPromptCard field={field} day={props.day} sectionId={props.sectionId} />;
   }
 
   return <AnswerField {...props} field={field} />;
