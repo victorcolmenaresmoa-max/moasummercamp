@@ -76,7 +76,7 @@ export const b2c1Day1: Day = {
       q(`Because meaningful professional growth begins when we recognize that becoming a better teacher is not a destination—it is an ongoing journey of learning, reflection, and purposeful change.`),
     ],
   },
-  readingBeforeFieldsSectionId: 'b2c1_d1_part2',
+  readingAfterSectionId: 'b2c1_d1_part2',
   sections: [
     {
       id: 'b2c1_d1_part1',
@@ -105,7 +105,7 @@ export const b2c1Day1: Day = {
     },
     {
       id: 'b2c1_d1_part2', title: 'PHASE 2 - CRITICAL READING', minutes: 25,
-      intro: 'Review the tasks below before you begin. Then read The Teacher I Have Become: Beyond Methods and Materials and return to this section to record the author’s claims, evidence/experiences, changes in belief, and conclusions.',
+      intro: 'Before reading, review the questions and chart in this phase so you know what information to look for. Do not complete them yet. Then continue to the reading below. As you read, identify the author’s claims, evidence and experiences, changes in belief, and conclusions, and return to this phase to record your answers.',
       fields: [
         { type: 'textarea', key: 'b2c1_d1_claims', label: '1. CLAIMS — What does the author claim?', rows: 5 },
         { type: 'textarea', key: 'b2c1_d1_evidence', label: '2. EVIDENCE / EXPERIENCES — What experiences does the author use to support the ideas?', rows: 5 },
