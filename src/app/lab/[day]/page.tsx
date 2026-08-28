@@ -60,7 +60,7 @@ export default async function DayPage({ params }: { params: { day: string } }) {
   const total = totalFields(dayNumber, route);
   const progress = pct(done, total);
 
-  const renderReadingBeforeSections = !day.readingAfterSectionId;
+  const renderReadingBeforeSections = !day.readingAfterSectionId && !day.readingBeforeFieldsSectionId;
 
   return (
     <div className="space-y-8">
@@ -83,10 +83,10 @@ export default async function DayPage({ params }: { params: { day: string } }) {
               Day {day.day} · {day.theme}
             </p>
             <h1 className="h-display mt-2 text-3xl leading-tight sm:text-4xl">{day.title}</h1>
-            <p className="mt-3 max-w-2xl text-sm font-semibold text-white/85">
+            <p className="mt-3 max-w-3xl text-[15px] font-bold leading-relaxed text-white/95 sm:text-base">
               Guiding question: {day.guidingQuestion}
             </p>
-            <p className="mt-1 text-xs font-semibold text-white/55">Reading Lab: {day.schedule}</p>
+            <p className="mt-1.5 text-sm font-semibold text-white/80">Reading Lab: {day.schedule}</p>
           </div>
         </div>
 
@@ -116,6 +116,12 @@ export default async function DayPage({ params }: { params: { day: string } }) {
             </div>
 
             {section.intro && <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink/65">{section.intro}</p>}
+
+            {day.readingBeforeFieldsSectionId === section.id && (
+              <div className="mt-6">
+                <ReadingText title={day.reading.title} blocks={day.reading.blocks} />
+              </div>
+            )}
 
             <div className="mt-6 space-y-7">
               {section.fields.map((field) => (

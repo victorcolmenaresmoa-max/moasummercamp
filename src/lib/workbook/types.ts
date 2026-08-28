@@ -22,6 +22,8 @@ export type Field =
       columns: string[];
       minRows: number;
       fixedFirstColumn?: string[];
+      /** Optional dropdown choices keyed by zero-based column index. */
+      selectColumns?: Record<number, string[]>;
     }
   /** Autoevaluacion: una opcion por fila */
   | { type: 'matrix'; key: string; label: string; rows: string[]; options: string[] }
@@ -57,6 +59,8 @@ export type Day = {
   reading: { title: string; blocks: ReadingBlock[] };
   /** Coloca la lectura despues de esta seccion. Si se omite, aparece antes de las secciones. */
   readingAfterSectionId?: string;
+  /** Coloca la lectura dentro de esta seccion, despues de su introduccion y antes de sus campos. */
+  readingBeforeFieldsSectionId?: string;
   sections: Section[];
   finalChecklist: string[];
 };

@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import moaLogo from '../../../public/moa-logo.webp';
+import moaWordmark from '../../../public/moa-wordmark.png';
 
 /**
  * Piezas gráficas de marca MOA Education.
@@ -34,12 +35,22 @@ export function MoaMark({ className = 'h-9 w-9' }: { className?: string }) {
   );
 }
 
-export function MoaWordmark({ className = '' }: { className?: string }) {
+export function MoaWordmark({
+  className = '',
+  tone = 'dark',
+}: {
+  className?: string;
+  tone?: 'dark' | 'light';
+}) {
   return (
-    <span className={`inline-flex items-baseline gap-2 ${className}`}>
-      <span className="h-display text-[1.35em] leading-none tracking-tight">moa</span>
-      <span className="eyebrow leading-none opacity-80">Education</span>
-    </span>
+    <Image
+      src={moaWordmark}
+      alt="MOA Education"
+      priority
+      unoptimized
+      sizes="120px"
+      className={`h-9 w-auto object-contain ${tone === 'light' ? 'brightness-0 invert' : ''} ${className}`}
+    />
   );
 }
 
@@ -47,10 +58,7 @@ export function MoaLogo({ className = '', tone = 'dark' }: { className?: string;
   return (
     <span className={`inline-flex items-center gap-2.5 ${tone === 'light' ? 'text-white' : 'text-teal-900'} ${className}`}>
       <MoaMark className="h-9 w-9 shrink-0" />
-      <span className="leading-none">
-        <span className="block h-display text-lg leading-none">moa</span>
-        <span className="eyebrow block leading-none opacity-70">Education</span>
-      </span>
+      <MoaWordmark tone={tone} />
     </span>
   );
 }
@@ -132,7 +140,10 @@ export function MoaPattern({
 }) {
   const soft = variant === 'soft';
   return (
-    <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`} aria-hidden="true">
+    <div
+      className={`pointer-events-none absolute inset-0 overflow-hidden ${soft ? 'opacity-[.32]' : ''} ${className}`}
+      aria-hidden="true"
+    >
       {/* onda madre del logo */}
       <svg
         viewBox="0 0 400 400"

@@ -182,10 +182,28 @@ function TableEditor({
               <tr key={r} className="align-top">
                 {row.map((cell, c) => {
                   const locked = c === 0 && !!field.fixedFirstColumn?.length;
+                  const selectOptions = field.selectColumns?.[c];
                   return (
                     <td key={c} className="border-b border-teal-50 p-0 last:border-r-0">
                       {locked ? (
                         <div className="bg-teal-50/40 px-3.5 py-2.5 text-sm font-bold text-teal-800">{cell}</div>
+                      ) : selectOptions ? (
+                        <div className="px-3 py-2.5">
+                          <select
+                            disabled={readOnly}
+                            aria-label={`${field.columns[c]} row ${r + 1}`}
+                            className="input min-w-[190px] py-2"
+                            value={cell}
+                            onChange={(e) => update(r, c, e.target.value)}
+                          >
+                            <option value="">Select your position…</option>
+                            {selectOptions.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       ) : (
                         <textarea
                           rows={2}

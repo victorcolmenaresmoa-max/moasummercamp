@@ -76,7 +76,7 @@ export const b2c1Day1: Day = {
       q(`Because meaningful professional growth begins when we recognize that becoming a better teacher is not a destination—it is an ongoing journey of learning, reflection, and purposeful change.`),
     ],
   },
-  readingAfterSectionId: 'b2c1_d1_part1',
+  readingBeforeFieldsSectionId: 'b2c1_d1_part2',
   sections: [
     {
       id: 'b2c1_d1_part1',
@@ -87,6 +87,9 @@ export const b2c1Day1: Day = {
         {
           type: 'table', key: 'b2c1_d1_beliefs', label: 'Teaching Beliefs Continuum',
           columns: ['Statement', 'My position', 'Why?'], minRows: 4,
+          selectColumns: {
+            1: ['Agree', 'Partially Agree', 'Disagree'],
+          },
           fixedFirstColumn: [
             'Students learn best when teachers explain clearly.',
             'Mistakes are essential for learning.',
@@ -102,13 +105,19 @@ export const b2c1Day1: Day = {
     },
     {
       id: 'b2c1_d1_part2', title: 'PHASE 2 - CRITICAL READING', minutes: 25,
-      intro: 'Read The Teacher I Have Become: Beyond Methods and Materials. While reading, identify claims, evidence/experiences, changes in belief, and conclusions.',
+      intro: 'Review the tasks below before you begin. Then read The Teacher I Have Become: Beyond Methods and Materials and return to this section to record the author’s claims, evidence/experiences, changes in belief, and conclusions.',
       fields: [
         { type: 'textarea', key: 'b2c1_d1_claims', label: '1. CLAIMS — What does the author claim?', rows: 5 },
         { type: 'textarea', key: 'b2c1_d1_evidence', label: '2. EVIDENCE / EXPERIENCES — What experiences does the author use to support the ideas?', rows: 5 },
         { type: 'textarea', key: 'b2c1_d1_changes', label: '3. CHANGES IN BELIEF — What beliefs did the author hold before, and how did they change?', rows: 5 },
         { type: 'textarea', key: 'b2c1_d1_conclusions', label: '4. CONCLUSIONS — What conclusions does the author reach?', rows: 5 },
-        { type: 'table', key: 'b2c1_d1_belief_table', label: 'Complete:', columns: ["Author's belief", 'Experience/evidence', 'Change in thinking'], minRows: 4 },
+        {
+          type: 'table',
+          key: 'b2c1_d1_belief_table',
+          label: 'Complete the chart with four key moments from the reading. In each row, identify one belief the author expresses, the experience or evidence that shaped that belief, and explain how the author’s thinking changed, developed, or became stronger as a result.',
+          columns: ["Author's belief", 'Experience/evidence', 'Change in thinking'],
+          minRows: 4,
+        },
         { type: 'textarea', key: 'b2c1_d1_main_argument', label: "What is the author's main argument about teaching expertise?", rows: 4 },
         { type: 'textarea', key: 'b2c1_d1_position_change', label: "How does the author's understanding of teaching change throughout the text?", help: "Identify how the author's thinking evolves, not only explicit information.", rows: 5 },
       ],
