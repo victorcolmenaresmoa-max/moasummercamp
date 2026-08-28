@@ -19,12 +19,13 @@ import { ParticipantDayOverride } from '@/components/moderator/ParticipantDayOve
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Badge } from '@/components/ui/Badge';
 import { ArrowLeftIcon } from '@/components/ui/Icons';
-import { hasContent, pct, timeAgo } from '@/lib/utils';
+import { formatDuration, hasContent, labSessionSeconds, pct, timeAgo } from '@/lib/utils';
 import { AI_EVIDENCE_BUCKET, parseExternalAiEvidence } from '@/lib/ai/evidence';
 import type {
   AiInteractionRow,
   CheckpointRow,
   DayAccessRow,
+  LabTimeSessionRow,
   ParticipantDayAccessRow,
 } from '@/types/database';
 
@@ -57,6 +58,7 @@ export default async function ParticipantDetail({
     { data: interactions },
     { data: access },
     { data: overrides },
+    { data: timeSessions },
   ] = await Promise.all([
     supabase.from('responses').select('field_key, value, day, updated_at').eq('user_id', params.id),
     supabase.from('checkpoints').select('*').eq('user_id', params.id),
@@ -74,6 +76,10 @@ export default async function ParticipantDetail({
       .limit(100),
     supabase.from('day_access').select('*'),
     supabase.from('participant_day_access').select('*').eq('user_id', params.id),
+    supabase
+      .from('lab_time_sessions')
+      .select('user_id, day, started_at, last_seen_at, ended_at')
+      .eq('user_id', params.id),
   ]);
 
   const answers = new Map((responses ?? []).map((r) => [r.field_key, r.value]));
@@ -127,6 +133,16 @@ export default async function ParticipantDetail({
     0,
   );
 
+
+  const timeByDay: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  for (const session of (timeSessions ?? []) as Pick<
+    LabTimeSessionRow,
+    'day' | 'started_at' | 'last_seen_at' | 'ended_at'
+  >[]) {
+    timeByDay[session.day] = (timeByDay[session.day] ?? 0) + labSessionSeconds(session);
+  }
+  const totalLabTime = Object.values(timeByDay).reduce((sum, seconds) => sum + seconds, 0);
+
   return (
     <div className="space-y-6">
       <ModeratorRealtime userId={params.id} />
@@ -147,6 +163,7 @@ export default async function ParticipantDetail({
               <h1 className="h-display text-2xl text-teal-900">{participant.full_name}</h1>
               <Badge tone="accent">{WORKBOOK_ROUTE_LABELS[route]}</Badge>
               {pendingReview > 0 && <Badge tone="warn">{pendingReview} to review</Badge>}
+              <Badge tone="neutral">Lab time {formatDuration(totalLabTime)}</Badge>
             </div>
             <p className="mt-1 text-sm font-semibold text-ink/55">
               {participant.campus ? CAMPUS_LABELS[participant.campus] : 'No campus'} · {participant.email} ·
@@ -162,6 +179,9 @@ export default async function ParticipantDetail({
                   <p className="eyebrow text-ink/45">D{d.day}</p>
                   <ProgressBar className="mt-1.5" value={p} />
                   <p className="mt-1 text-xs font-extrabold text-teal-600">{p}%</p>
+                  <p className="mt-0.5 text-[10px] font-bold text-ink/45" title="Accumulated Lab time">
+                    {formatDuration(timeByDay[d.day] ?? 0)}
+                  </p>
                 </div>
               );
             })}

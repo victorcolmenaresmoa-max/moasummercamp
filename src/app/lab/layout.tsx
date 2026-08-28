@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { requireProfile } from '@/lib/supabase/session';
+import { createClient } from '@/lib/supabase/server';
 import { SignOutButton } from '@/components/SignOutButton';
 import { MoaLogo } from '@/components/brand/Moa';
 import { CAMPUS_LABELS } from '@/lib/workbook';
 import { LabContentProtection } from '@/components/LabContentProtection';
+import { TeacherTutorial } from '@/components/TeacherTutorial';
 
 export const metadata: Metadata = {
   other: { google: 'notranslate' },
@@ -13,6 +15,15 @@ export const metadata: Metadata = {
 export default async function LabLayout({ children }: { children: React.ReactNode }) {
   const profile = await requireProfile();
   const isStaff = profile.role !== 'participant';
+  let tutorialSeenAt: string | null = null;
+  if (!isStaff) {
+    const { data } = await createClient()
+      .from('profiles')
+      .select('tutorial_seen_at')
+      .eq('id', profile.id)
+      .maybeSingle();
+    tutorialSeenAt = data?.tutorial_seen_at ?? null;
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -30,6 +41,7 @@ export default async function LabLayout({ children }: { children: React.ReactNod
                 {profile.campus ? CAMPUS_LABELS[profile.campus] : 'No campus'}
               </p>
             </div>
+            {!isStaff && <TeacherTutorial userId={profile.id} tutorialSeenAt={tutorialSeenAt} />}
             {isStaff && (
               <Link href="/moderator" className="btn-ghost btn-sm">
                 Moderator panel

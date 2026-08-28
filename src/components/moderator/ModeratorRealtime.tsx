@@ -20,6 +20,7 @@ export function ModeratorRealtime({ userId }: { userId?: string }) {
       ...(userId ? [{ table: 'responses', filter } as const] : []),
       { table: 'checkpoints', filter },
       { table: 'ai_reports', filter },
+      ...(userId ? [{ table: 'lab_time_sessions', filter } as const] : []),
       { table: 'day_access' },
       ...(userId ? [{ table: 'participant_day_access', filter } as const] : []),
     ],

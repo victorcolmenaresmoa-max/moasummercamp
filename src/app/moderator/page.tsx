@@ -16,8 +16,8 @@ import { DayAccessControl } from '@/components/moderator/DayAccessControl';
 import { DeleteParticipantButton } from '@/components/moderator/DeleteParticipantButton';
 import { TelegramTestButton } from '@/components/moderator/TelegramTestButton';
 import { Squiggle } from '@/components/brand/Moa';
-import { pct, timeAgo } from '@/lib/utils';
-import type { Campus, DayAccessRow, ParticipantProgressRow, WorkbookRoute } from '@/types/database';
+import { formatDuration, labSessionSeconds, pct, timeAgo } from '@/lib/utils';
+import type { Campus, DayAccessRow, LabTimeSessionRow, ParticipantProgressRow, WorkbookRoute } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,13 +36,27 @@ export default async function ModeratorDashboard({ searchParams }: { searchParam
   }
   if (searchParams.q) query = query.ilike('full_name', `%${searchParams.q}%`);
 
-  const [{ data }, { data: access }] = await Promise.all([
+  let timeQuery = supabase
+    .from('lab_time_sessions')
+    .select('user_id, day, started_at, last_seen_at, ended_at');
+  if (dayFilter) timeQuery = timeQuery.eq('day', dayFilter);
+
+  const [{ data }, { data: access }, { data: timeSessions }] = await Promise.all([
     query,
     supabase.from('day_access').select('*').order('day'),
+    timeQuery,
   ]);
 
   const rows = (data ?? []) as ParticipantProgressRow[];
   const accessRows = (access ?? []) as DayAccessRow[];
+  const timeRows = (timeSessions ?? []) as Pick<LabTimeSessionRow, 'user_id' | 'day' | 'started_at' | 'last_seen_at' | 'ended_at'>[];
+  const timeSecondsByUser = new Map<string, number>();
+  for (const session of timeRows) {
+    timeSecondsByUser.set(
+      session.user_id,
+      (timeSecondsByUser.get(session.user_id) ?? 0) + labSessionSeconds(session),
+    );
+  }
 
   const dayAnswers = (r: ParticipantProgressRow, d: number) =>
     [r.day1_answers, r.day2_answers, r.day3_answers, r.day4_answers][d - 1] ?? 0;
@@ -129,7 +143,7 @@ export default async function ModeratorDashboard({ searchParams }: { searchParam
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1120px] text-sm">
+          <table className="w-full min-w-[1220px] text-sm">
             <thead className="bg-teal-50/80 text-left">
               <tr className="eyebrow text-teal-700">
                 <th className="px-4 py-3">Participant</th>
@@ -143,6 +157,7 @@ export default async function ModeratorDashboard({ searchParams }: { searchParam
                 <th className="px-4 py-3">Checkpoints</th>
                 <th className="px-4 py-3">To review</th>
                 <th className="px-4 py-3">Activity</th>
+                <th className="px-4 py-3">Lab time</th>
                 <th className="px-4 py-3">AI report</th>
                 <th className="px-4 py-3" />
                 {isAdmin && <th className="px-4 py-3" />}
@@ -180,6 +195,7 @@ export default async function ModeratorDashboard({ searchParams }: { searchParam
                       {r.checkpoints_pending_review > 0 ? <Badge tone="warn">{r.checkpoints_pending_review}</Badge> : <span className="text-ink/30">—</span>}
                     </td>
                     <td className="px-4 py-3 text-xs font-semibold text-ink/55">{timeAgo(r.last_activity)}</td>
+                    <td className="px-4 py-3 text-xs font-extrabold text-teal-700">{formatDuration(timeSecondsByUser.get(r.id) ?? 0)}</td>
                     <td className="px-4 py-3">{r.last_report_at ? <Badge tone="success">Generated</Badge> : <Badge tone="warn">Pending</Badge>}</td>
                     <td className="px-4 py-3">
                       <Link href={`/moderator/participant/${r.id}`} prefetch={false} className="btn-ghost btn-sm">Open</Link>
@@ -192,7 +208,7 @@ export default async function ModeratorDashboard({ searchParams }: { searchParam
               })}
               {!rows.length && (
                 <tr>
-                  <td colSpan={isAdmin ? 14 : 13} className="px-4 py-14 text-center font-semibold text-ink/45">
+                  <td colSpan={isAdmin ? 15 : 14} className="px-4 py-14 text-center font-semibold text-ink/45">
                     No participants match these filters.
                   </td>
                 </tr>

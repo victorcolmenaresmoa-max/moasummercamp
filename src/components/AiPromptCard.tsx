@@ -239,6 +239,7 @@ export function AiPromptCard({ field, day, sectionId }: Props) {
           href={GEMINI_URL}
           target="_blank"
           rel="noreferrer"
+          data-lab-allow-exit="true"
           className="btn btn-sm bg-plum-500 text-white hover:bg-plum-600"
         >
           Open Google Gemini ↗
@@ -406,7 +407,7 @@ export function AiPromptCard({ field, day, sectionId }: Props) {
                   {item.parsed?.imagePath && <span className="chip bg-sun-100 text-sun-700">Screenshot saved</span>}
                 </div>
                 {item.imageUrl && (
-                  <a href={item.imageUrl} target="_blank" rel="noreferrer" className="mt-2 block no-print">
+                  <a href={item.imageUrl} target="_blank" rel="noreferrer" data-lab-allow-exit="true" className="mt-2 block no-print">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={item.imageUrl}

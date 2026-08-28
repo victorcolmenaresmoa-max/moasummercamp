@@ -10,7 +10,7 @@ Digital workbook for the **MOA Reading Lab 2026**, with two routes: **Route 1 (T
 
 ### 1. Database
 
-For a new Supabase project, run the SQL files in the `supabase/` folder as documented in the migration files. For an existing installation that already supports workbook routes/checkpoints, keep the existing data and migrations; do not recreate the database.
+For a new Supabase project, run `supabase/schema.sql` and then the numbered migrations in order. For an existing installation that already supports workbook routes/checkpoints, **do not recreate the database**: run only the migrations you have not applied yet. This version requires `supabase/migration_03_tutorial_exit_timer.sql` for the teacher tutorial state and Lab-time tracking.
 
 ### 2. Environment variables
 
@@ -40,6 +40,15 @@ npm run build
 ### 4. Staff accounts
 
 Participants can sign up normally. Staff roles must be assigned server-side/database-side; they are never granted from the browser.
+
+
+## Teacher onboarding, incomplete-Lab guard, and Lab time
+
+- The participant header includes a **Tutorial** button. The guide opens automatically the first time a teacher enters the Reading Lab and its completion is stored in `profiles.tutorial_seen_at`.
+- While a teacher is inside `/lab/[day]`, attempts to return to the dashboard or sign out are blocked when answer fields are still incomplete. The warning sends the teacher to the first missing field. Required external AI links (Google Gemini) remain usable.
+- Each visit to a Lab is stored in `lab_time_sessions`. Leaving the Lab closes the current visit; re-entering starts a new visit and the moderator sees the accumulated individual time. A heartbeat limits over-counting if a browser closes unexpectedly.
+
+For an existing deployment, apply `supabase/migration_03_tutorial_exit_timer.sql` in the Supabase SQL Editor before using these features.
 
 ## Telegram checkpoint alerts
 
@@ -88,6 +97,7 @@ The route selector is in `src/lib/workbook/index.ts` and sign-up is in `src/app/
 ## Main server endpoints
 
 - `POST /api/checkpoints/submit` — saves a checkpoint submission and sends the Telegram alert.
+- `POST /api/lab-time` — starts, heartbeats, and pauses an authenticated teacher's Lab-time session.
 - `POST /api/telegram/test` — staff-only Telegram connection test.
 - `GET/POST /api/ai/evidence` — records external AI prompts plus text/screenshot evidence; no participant LLM call is made by the app.
 - `POST /api/ai/report` — staff pedagogical report generator.

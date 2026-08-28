@@ -4,15 +4,18 @@ import { createClient } from '@/lib/supabase/server';
 import { requireProfile } from '@/lib/supabase/session';
 import { getOpenDays, isStaff } from '@/lib/access';
 import { getDay, totalFields, normalizeWorkbookRoute } from '@/lib/workbook';
+import { answerableFields, isFieldComplete } from '@/lib/workbook/types';
 import { ReadingText } from '@/components/ReadingText';
 import { WorkbookField } from '@/components/WorkbookField';
 import { CheckpointBox } from '@/components/CheckpointBox';
 import { DayLocked } from '@/components/DayLocked';
 import { DayFinish } from '@/components/DayFinish';
 import { LabRealtime } from '@/components/LabRealtime';
+import { LabExitGuard } from '@/components/LabExitGuard';
+import { LabTimeTracker } from '@/components/LabTimeTracker';
 import { ArrowLeftIcon } from '@/components/ui/Icons';
 import { MoaPattern } from '@/components/brand/Moa';
-import { hasContent, pct } from '@/lib/utils';
+import { pct } from '@/lib/utils';
 import type { CheckpointRow } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
@@ -56,7 +59,10 @@ export default async function DayPage({ params }: { params: { day: string } }) {
 
   const answers = new Map((responses ?? []).map((r) => [r.field_key, r.value]));
   const cps = new Map((checkpoints ?? []).map((c: CheckpointRow) => [c.checkpoint_number, c]));
-  const done = (responses ?? []).filter((r) => hasContent(r.value)).length;
+  const answerable = answerableFields(day);
+  const fields = answerable.map(({ field }) => field);
+  const initiallyComplete = fields.filter((field) => isFieldComplete(field, answers.get(field.key))).map((field) => field.key);
+  const done = initiallyComplete.length;
   const total = totalFields(dayNumber, route);
   const progress = pct(done, total);
 
@@ -65,6 +71,12 @@ export default async function DayPage({ params }: { params: { day: string } }) {
   return (
     <div className="space-y-8">
       <LabRealtime userId={profile.id} />
+      {!staff && (
+        <>
+          <LabTimeTracker day={day.day} />
+          <LabExitGuard fields={fields} initiallyComplete={initiallyComplete} />
+        </>
+      )}
 
       <Link
         href="/lab"

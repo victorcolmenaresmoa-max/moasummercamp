@@ -12,6 +12,7 @@ export function SignOutButton({ tone = 'dark' }: { tone?: 'dark' | 'light' }) {
     <button
       type="button"
       className={`${tone === 'light' ? 'btn-onDark' : 'btn-ghost'} btn-sm no-print`}
+      data-lab-exit="true"
       disabled={busy}
       onClick={async () => {
         setBusy(true);

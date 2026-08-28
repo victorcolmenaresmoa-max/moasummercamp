@@ -65,6 +65,43 @@ export type Day = {
   finalChecklist: string[];
 };
 
+
+
+/**
+ * Strict completion used by the Lab exit guard. Unlike hasContent(), this
+ * verifies every required cell in compound fields so a partially filled table
+ * or matrix is not treated as finished.
+ */
+export function isFieldComplete(field: Field, value: any): boolean {
+  if (field.type === 'info' || field.type === 'ai_prompt') return true;
+
+  if (field.type === 'text' || field.type === 'textarea') {
+    return typeof value?.text === 'string' && value.text.trim().length > 0;
+  }
+
+  if (field.type === 'checkgroup') {
+    return Array.isArray(value?.checked) && value.checked.length > 0;
+  }
+
+  if (field.type === 'matrix') {
+    return field.rows.every((row) => typeof value?.[row] === 'string' && value[row].trim().length > 0);
+  }
+
+  if (field.type === 'table') {
+    const rows: unknown[][] = Array.isArray(value?.rows) ? value.rows : [];
+    for (let r = 0; r < field.minRows; r += 1) {
+      for (let c = 0; c < field.columns.length; c += 1) {
+        if (c === 0 && field.fixedFirstColumn?.length) continue;
+        const cell = rows[r]?.[c];
+        if (typeof cell !== 'string' || cell.trim().length === 0) return false;
+      }
+    }
+    return true;
+  }
+
+  return false;
+}
+
 export const CAMPUS_LABELS: Record<string, string> = {
   merida: 'Mérida',
   el_vigia: 'El Vigía',

@@ -13,6 +13,7 @@ export type Profile = {
   role: UserRole;
   group_name: string | null;
   workbook_route: WorkbookRoute;
+  tutorial_seen_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -70,6 +71,16 @@ export type AiInteractionRow = {
   section_id: string | null;
   prompt: string;
   response: string | null;
+  created_at: string;
+};
+
+export type LabTimeSessionRow = {
+  id: string;
+  user_id: string;
+  day: number;
+  started_at: string;
+  last_seen_at: string;
+  ended_at: string | null;
   created_at: string;
 };
 
@@ -140,6 +151,12 @@ export interface Database {
         Row: AiInteractionRow;
         Insert: Partial<AiInteractionRow>;
         Update: Partial<AiInteractionRow>;
+        Relationships: [];
+      };
+      lab_time_sessions: {
+        Row: LabTimeSessionRow;
+        Insert: Partial<LabTimeSessionRow> & { user_id: string; day: number };
+        Update: Partial<LabTimeSessionRow>;
         Relationships: [];
       };
       day_access: {

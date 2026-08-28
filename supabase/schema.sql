@@ -34,11 +34,16 @@ create table if not exists public.profiles (
   role          public.user_role not null default 'participant',
   group_name    text,                       -- opcional: "Grupo A", "Aula 3"...
   workbook_route text not null default 'a2_b1' check (workbook_route in ('a2_b1', 'b2_c1')),
+  tutorial_seen_at timestamptz,
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
 
 comment on table public.profiles is 'Participants (teachers) and staff (moderators/admins) in the camp.';
+
+-- Mantiene schema.sql idempotente también sobre instalaciones anteriores.
+alter table public.profiles
+  add column if not exists tutorial_seen_at timestamptz;
 
 -- ---------------------------------------------------------------------------
 -- 3. RESPUESTAS DEL WORKBOOK
@@ -127,6 +132,27 @@ create table if not exists public.ai_interactions (
 
 create index if not exists ai_interactions_user_idx on public.ai_interactions (user_id, created_at desc);
 
+
+-- ---------------------------------------------------------------------------
+-- 6b. TIEMPO ACUMULADO DENTRO DE CADA LAB
+--     Cada entrada crea una sesión. last_seen_at limita sesiones que hayan
+--     quedado abiertas por cierre brusco del navegador.
+-- ---------------------------------------------------------------------------
+create table if not exists public.lab_time_sessions (
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid        not null references public.profiles(id) on delete cascade,
+  day          smallint    not null check (day between 1 and 4),
+  started_at   timestamptz not null default now(),
+  last_seen_at timestamptz not null default now(),
+  ended_at     timestamptz,
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists lab_time_sessions_user_day_idx
+  on public.lab_time_sessions (user_id, day, started_at desc);
+create index if not exists lab_time_sessions_open_idx
+  on public.lab_time_sessions (user_id) where ended_at is null;
+
 -- ---------------------------------------------------------------------------
 -- 7. TRIGGERS
 -- ---------------------------------------------------------------------------
@@ -199,6 +225,7 @@ alter table public.responses       enable row level security;
 alter table public.checkpoints     enable row level security;
 alter table public.ai_reports      enable row level security;
 alter table public.ai_interactions enable row level security;
+alter table public.lab_time_sessions enable row level security;
 
 -- profiles
 drop policy if exists "profiles_select_own_or_staff" on public.profiles;
@@ -266,6 +293,14 @@ drop policy if exists "ai_interactions_read_own_or_staff" on public.ai_interacti
 create policy "ai_interactions_read_own_or_staff" on public.ai_interactions
   for select using (user_id = auth.uid() or public.is_staff());
 
+
+-- lab_time_sessions
+-- El contador se escribe con service_role y solo el staff puede leerlo.
+drop policy if exists "lab_time_read_own_or_staff" on public.lab_time_sessions;
+drop policy if exists "lab_time_read_staff" on public.lab_time_sessions;
+create policy "lab_time_read_staff" on public.lab_time_sessions
+  for select using (public.is_staff());
+
 -- ---------------------------------------------------------------------------
 -- 10. VISTA DE PROGRESO (alimenta el dashboard del moderador)
 -- ---------------------------------------------------------------------------
@@ -322,6 +357,10 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 do $$ begin
   alter publication supabase_realtime add table public.ai_reports;
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  alter publication supabase_realtime add table public.lab_time_sessions;
 exception when duplicate_object then null; end $$;
 
 -- ---------------------------------------------------------------------------

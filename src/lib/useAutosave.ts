@@ -55,6 +55,14 @@ export function useAutosave({ userId, day, sectionId, fieldKey, fieldLabel, init
   }, []);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('moa:workbook-field-change', { detail: { fieldKey, value } }),
+      );
+    }
+  }, [fieldKey, value]);
+
+  useEffect(() => {
     const serialized = JSON.stringify(value ?? {});
     if (serialized === lastSaved.current) return;
 

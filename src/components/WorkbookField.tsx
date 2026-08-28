@@ -57,7 +57,7 @@ function AnswerField({ field, userId, day, sectionId, initial, readOnly }: Props
   const disabled = readOnly || status === 'locked';
 
   return (
-    <div className="space-y-2.5">
+    <div id={`field-${field.key}`} data-workbook-field={field.key} className="space-y-2.5 scroll-mt-28 transition-shadow">
       <div className="flex items-start justify-between gap-4">
         <div>
           {label && (
