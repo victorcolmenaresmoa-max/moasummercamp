@@ -26,3 +26,7 @@ La migración agrega:
 ## GitHub / Vercel
 
 Después de aplicar la migración, sube el contenido de este paquete a GitHub y despliega normalmente en Vercel. No se agregaron nuevas variables de entorno: se siguen usando las variables que ya requiere el proyecto, incluyendo `SUPABASE_SERVICE_ROLE_KEY` para registrar el tiempo de forma segura desde el servidor.
+
+## Adjustment: optional exit from incomplete Labs
+
+The incomplete-Lab warning now offers three choices: jump to the first missing answer, exit the current Day anyway, or remain in the Day. When the teacher chooses to exit anyway, queued autosaves are flushed first and the original requested action is respected (for example, return to My Labs or sign out). The Lab timer pauses through the existing page-exit tracking.

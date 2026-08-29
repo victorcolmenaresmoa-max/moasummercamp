@@ -74,7 +74,7 @@ export default async function DayPage({ params }: { params: { day: string } }) {
       {!staff && (
         <>
           <LabTimeTracker day={day.day} />
-          <LabExitGuard fields={fields} initiallyComplete={initiallyComplete} />
+          <LabExitGuard day={day.day} fields={fields} initiallyComplete={initiallyComplete} />
         </>
       )}
 

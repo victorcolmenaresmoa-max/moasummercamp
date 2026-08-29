@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { flushAutosaves } from '@/lib/autosaveManager';
 import type { Field } from '@/lib/workbook/types';
 import { isFieldComplete } from '@/lib/workbook/types';
@@ -13,9 +13,11 @@ type FieldChangeDetail = {
 };
 
 export function LabExitGuard({
+  day,
   fields,
   initiallyComplete,
 }: {
+  day: number;
   fields: Field[];
   initiallyComplete: string[];
 }) {
@@ -26,6 +28,8 @@ export function LabExitGuard({
     Object.fromEntries(fieldKeys.map((key) => [key, initial.has(key)])),
   );
   const [warningOpen, setWarningOpen] = useState(false);
+  const pendingExitTarget = useRef<HTMLElement | null>(null);
+  const allowNextExit = useRef(false);
 
   const missingKeys = fieldKeys.filter((key) => !completion[key]);
   const firstMissing = missingKeys[0] ?? null;
@@ -47,6 +51,11 @@ export function LabExitGuard({
     const hasMissing = () => fieldKeys.some((key) => !completion[key]);
 
     const interceptExit = (event: MouseEvent) => {
+      if (allowNextExit.current) {
+        allowNextExit.current = false;
+        return;
+      }
+
       if (!hasMissing()) return;
       const target = event.target as HTMLElement | null;
       if (!target) return;
@@ -66,6 +75,7 @@ export function LabExitGuard({
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
+      pendingExitTarget.current = link ?? exitButton;
       void flushAutosaves();
       setWarningOpen(true);
     };
@@ -86,6 +96,7 @@ export function LabExitGuard({
   }, [completion, fieldKeys]);
 
   const goToMissing = () => {
+    pendingExitTarget.current = null;
     setWarningOpen(false);
     if (!firstMissing) return;
 
@@ -98,6 +109,27 @@ export function LabExitGuard({
       const focusable = element.querySelector<HTMLElement>('textarea, input, select, button');
       focusable?.focus({ preventScroll: true });
     }, 450);
+  };
+
+  const stayHere = () => {
+    pendingExitTarget.current = null;
+    setWarningOpen(false);
+  };
+
+  const exitAnyway = async () => {
+    const target = pendingExitTarget.current;
+    if (!target) {
+      setWarningOpen(false);
+      return;
+    }
+
+    // Give queued workbook answers one last chance to reach Supabase before
+    // performing the exact navigation/sign-out action the teacher requested.
+    await flushAutosaves();
+    pendingExitTarget.current = null;
+    setWarningOpen(false);
+    allowNextExit.current = true;
+    target.click();
   };
 
   if (!warningOpen) return null;
@@ -118,14 +150,28 @@ export function LabExitGuard({
         </h2>
         <p className="mt-3 text-center text-sm font-semibold leading-relaxed text-ink/65">
           You still have <strong className="text-coral-600">{missingKeys.length}</strong>{' '}
-          {missingKeys.length === 1 ? 'answer' : 'answers'} to complete. Finish the missing fields before leaving this Lab.
+          {missingKeys.length === 1 ? 'answer' : 'answers'} to complete. You can finish them now or leave Day {day} and continue later.
         </p>
+
         <button type="button" className="btn-primary mt-6 w-full py-3" onClick={goToMissing}>
           Take me to the first missing answer
         </button>
-        <button type="button" className="btn-ghost mt-2 w-full" onClick={() => setWarningOpen(false)}>
-          Stay here
+
+        <button
+          type="button"
+          className="mt-2 w-full rounded-full border-2 border-coral-500 bg-white px-5 py-2.5 text-sm font-extrabold text-coral-600 transition hover:bg-coral-50"
+          onClick={() => void exitAnyway()}
+        >
+          Exit Day {day} anyway
         </button>
+
+        <button type="button" className="btn-ghost mt-2 w-full" onClick={stayHere}>
+          Stay in Day {day}
+        </button>
+
+        <p className="mt-3 text-center text-xs font-semibold leading-relaxed text-ink/45">
+          Your saved answers will stay here, and your Lab timer will pause when you leave.
+        </p>
       </section>
     </div>
   );
